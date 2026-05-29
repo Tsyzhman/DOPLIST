@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+details > summary {
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.doplist-theme {
+  --doplist-bg: #020b14;
+  --doplist-panel: #07131f;
+  --doplist-panel-soft: rgba(255, 255, 255, 0.045);
+  --doplist-panel-strong: rgba(255, 255, 255, 0.08);
+  --doplist-border: rgba(236, 240, 241, 0.14);
+  --doplist-border-strong: rgba(236, 240, 241, 0.24);
+  --doplist-text: #ecf0f1;
+  --doplist-muted: rgba(236, 240, 241, 0.68);
+  --doplist-soft: rgba(236, 240, 241, 0.48);
+  --doplist-orange: #e67e22;
+  --doplist-purple: #8e44ad;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(142, 68, 173, 0.24), transparent 32rem),
+    radial-gradient(circle at 86% 12%, rgba(230, 126, 34, 0.16), transparent 28rem),
+    var(--doplist-bg);
+  color: var(--doplist-text);
+}
+
+.doplist-theme .bg-zinc-100,
+.doplist-theme .bg-zinc-50,
+.doplist-theme .bg-white {
+  background-color: var(--doplist-panel-soft) !important;
+}
+
+.doplist-theme .bg-white\/95 {
+  background-color: rgba(2, 11, 20, 0.94) !important;
+}
+
+.doplist-theme .bg-white\/60,
+.doplist-theme .bg-white\/70,
+.doplist-theme .bg-zinc-950 {
+  background-color: var(--doplist-purple) !important;
+}
+
+.doplist-theme .bg-emerald-50,
+.doplist-theme .bg-amber-50,
+.doplist-theme .bg-rose-50 {
+  background-color: rgba(230, 126, 34, 0.12) !important;
+}
+
+.doplist-theme .bg-emerald-100,
+.doplist-theme .bg-amber-100,
+.doplist-theme .bg-rose-100 {
+  background-color: rgba(230, 126, 34, 0.2) !important;
+}
+
+.doplist-theme .bg-emerald-600,
+.doplist-theme .bg-emerald-700,
+.doplist-theme .bg-amber-500 {
+  background-color: var(--doplist-orange) !important;
+}
+
+.doplist-theme .border-zinc-100,
+.doplist-theme .border-zinc-200,
+.doplist-theme .border-zinc-300,
+.doplist-theme .border-emerald-100,
+.doplist-theme .border-emerald-200,
+.doplist-theme .border-emerald-300,
+.doplist-theme .border-amber-200,
+.doplist-theme .border-rose-200 {
+  border-color: var(--doplist-border) !important;
+}
+
+.doplist-theme .text-zinc-950,
+.doplist-theme .text-zinc-900,
+.doplist-theme .text-zinc-800,
+.doplist-theme .text-zinc-700,
+.doplist-theme .text-emerald-950,
+.doplist-theme .text-amber-900,
+.doplist-theme .text-rose-800 {
+  color: var(--doplist-text) !important;
+}
+
+.doplist-theme .text-zinc-600,
+.doplist-theme .text-zinc-500,
+.doplist-theme .text-zinc-400 {
+  color: var(--doplist-muted) !important;
+}
+
+.doplist-theme .text-emerald-700,
+.doplist-theme .text-emerald-800,
+.doplist-theme .text-emerald-900,
+.doplist-theme .text-amber-800,
+.doplist-theme .text-rose-700 {
+  color: var(--doplist-orange) !important;
+}
+
+.doplist-theme input,
+.doplist-theme textarea,
+.doplist-theme select {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--doplist-border) !important;
+  color: var(--doplist-text) !important;
+}
+
+.doplist-theme input:focus,
+.doplist-theme textarea:focus,
+.doplist-theme select:focus {
+  border-color: var(--doplist-orange) !important;
+  box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.18) !important;
+}
+
+.doplist-theme button:not(:disabled):hover {
+  border-color: var(--doplist-border-strong);
+}
+
+.doplist-theme .proposal-preview,
+.doplist-theme .builder-summary,
+.doplist-theme section,
+.doplist-theme article,
+.doplist-theme aside {
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28) !important;
+}
+
+.doplist-theme .proposal-preview {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
+    var(--doplist-bg) !important;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+
+  .top-controls,
+  .builder-panel,
+  .builder-summary,
+  .no-print {
+    display: none !important;
+  }
+
+  .builder-grid,
+  main {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .proposal-preview {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .proposal-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 20mm 0 0 !important;
+  }
+
+  .proposal-section:first-child {
+    padding-top: 0 !important;
+  }
+
+  .proposal-card,
+  details,
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
