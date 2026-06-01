@@ -1,4 +1,4 @@
-import { ClipboardList, FileText } from "lucide-react";
+import { ClipboardList, FileText } from "@/components/icons";
 import type { ProjectSettings } from "@/lib/types";
 
 type ProjectSettingsFormProps = {

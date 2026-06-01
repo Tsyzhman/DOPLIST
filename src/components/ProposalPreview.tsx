@@ -1,5 +1,3 @@
-"use client";
-
 import {
   ArrowRight,
   BadgeCheck,
@@ -11,7 +9,7 @@ import {
   Layers3,
   MessageSquareText,
   ShieldCheck,
-} from "lucide-react";
+} from "@/components/icons";
 import type { ReactNode } from "react";
 import {
   calculateGrandTotal,

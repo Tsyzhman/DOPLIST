@@ -1,6 +1,4 @@
-"use client";
-
-import { CheckSquare, Square } from "lucide-react";
+import { CheckSquare, Square } from "@/components/icons";
 import {
   calculateGrandTotal,
   calculateItemTotal,

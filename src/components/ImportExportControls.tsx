@@ -1,6 +1,4 @@
-"use client";
-
-import { Download, FileUp, Link2, Printer, RotateCcw } from "lucide-react";
+import { Download, FileUp, Link2, Printer, RotateCcw } from "@/components/icons";
 import { useRef } from "react";
 import type { ProposalData } from "@/lib/types";
 

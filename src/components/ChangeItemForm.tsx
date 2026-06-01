@@ -1,6 +1,4 @@
-"use client";
-
-import { Check, Plus, Save, X } from "lucide-react";
+import { Check, Plus, Save, X } from "@/components/icons";
 import {
   categories,
   categoryLabels,

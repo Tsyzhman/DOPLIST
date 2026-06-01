@@ -1,5 +1,3 @@
-"use client";
-
 import {
   CheckCircle2,
   Copy,
@@ -7,7 +5,7 @@ import {
   Pencil,
   Trash2,
   WalletCards,
-} from "lucide-react";
+} from "@/components/icons";
 import type { ReactNode } from "react";
 import {
   calculateItemTotal,

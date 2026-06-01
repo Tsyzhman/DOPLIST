@@ -10,6 +10,14 @@ export type ProposalLanguage = "ru";
 
 export type ProposalCurrency = "RUB";
 
+export type ProposalArchiveState =
+  | "active"
+  | "archive_due"
+  | "archiving"
+  | "archived"
+  | "purged"
+  | "archive_failed";
+
 export type ShareAccessMode = "public_link" | "password";
 
 export type ProposalEventType =
@@ -116,6 +124,18 @@ export type Proposal = {
   passwordHash?: string;
   publicNotes?: string;
   internalNotes?: string;
+  archiveState?: ProposalArchiveState;
+  archiveAfter?: string;
+  purgeAfter?: string;
+  archivedAt?: string;
+  purgedAt?: string;
+  archiveTextSha256?: string;
+  archiveAttempts?: number;
+  archiveLastError?: string;
+  archiveLockedAt?: string;
+  telegramArchiveChatId?: string;
+  telegramArchiveMessageIds?: number[];
+  archiveSummary?: Record<string, unknown>;
   shareSettings: ShareSettings;
   assumptions: string[];
   outOfScope: string[];

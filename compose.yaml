@@ -1,0 +1,71 @@
+name: price-presentation
+
+services:
+  web:
+    image: price-presentation-web:latest
+    container_name: price-presentation-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NODE_IMAGE: node:24.16.0-alpine3.23
+    restart: unless-stopped
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      HOSTNAME: 0.0.0.0
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: production
+      NODE_OPTIONS: "--max-old-space-size=384"
+      PORT: "3000"
+    ports:
+      - "127.0.0.1:${APP_PORT:-3004}:3000"
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+        reservations:
+          cpus: "0.1"
+          memory: "128M"
+
+  archive-worker:
+    profiles: ["worker"]
+    image: price-presentation-archive-worker:latest
+    container_name: price-presentation-archive-worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+      args:
+        NODE_IMAGE: node:24.16.0-alpine3.23
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: production
+      NODE_OPTIONS: "--max-old-space-size=128"
+    command: ["node", "scripts/proposal-archive-worker.mjs"]
+    volumes:
+      - ./.data:/app/.data
+    mem_limit: 192m
+    mem_reservation: 64m
+    cpus: 0.2
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "192M"
+        reservations:
+          cpus: "0.05"
+          memory: "64M"
+
+networks:
+  default:
+    name: price-presentation-net

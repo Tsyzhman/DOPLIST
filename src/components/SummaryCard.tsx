@@ -1,4 +1,4 @@
-import { CalendarClock, CircleDollarSign, Layers3 } from "lucide-react";
+import { CalendarClock, CircleDollarSign, Layers3 } from "@/components/icons";
 import type { ReactNode } from "react";
 import {
   calculateGrandTotal,

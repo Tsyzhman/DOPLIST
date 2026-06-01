@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays } from "lucide-react";
+import { AlertTriangle, CalendarDays } from "@/components/icons";
 import { calculateTotalDays, categoryLabels } from "@/lib/proposal";
 import type { ProposalData } from "@/lib/types";
 
