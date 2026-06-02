@@ -298,9 +298,9 @@ function ChangeItemEditCard({
           <span className="font-semibold text-zinc-900">
             {formatMoney(itemTotal, currency)}
           </span>
-          <span className="mx-2 text-zinc-300">·</span>
+          <span className="mx-2 text-zinc-400">·</span>
           {item.estimatedDays} дн.
-          <span className="mx-2 text-zinc-300">·</span>
+          <span className="mx-2 text-zinc-400">·</span>
           {statusLabels[item.status]}
         </div>
         <div className="flex items-center gap-1">

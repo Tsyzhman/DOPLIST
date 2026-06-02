@@ -176,7 +176,7 @@ function TotalTile({
     >
       <div
         className={`text-xs font-semibold uppercase tracking-[0.14em] ${
-          strong ? "text-zinc-300" : "text-zinc-500"
+          strong ? "text-white/75" : "text-zinc-500"
         }`}
       >
         {label}
