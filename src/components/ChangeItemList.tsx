@@ -1,7 +1,6 @@
 import {
   CheckCircle2,
   Copy,
-  Layers3,
   Pencil,
   Trash2,
   WalletCards,
@@ -51,11 +50,6 @@ export function ChangeItemList({
     <SectionCard
       title="Корректировки по категориям"
       eyebrow="Список корректировок"
-      action={
-        <div className="rounded-md bg-zinc-100 p-2 text-zinc-700">
-          <Layers3 size={20} aria-hidden="true" />
-        </div>
-      }
     >
 
       {items.length === 0 ? (

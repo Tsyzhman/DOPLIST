@@ -23,12 +23,12 @@ export function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
       aria-pressed={isDark}
       title={label}
       onClick={() => onChange(nextTheme)}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-950 outline-none transition hover:bg-zinc-50 focus:ring-4 focus:ring-zinc-100"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-950 focus:outline-none focus:ring-4 focus:ring-zinc-100"
     >
       {isDark ? (
-        <Sun size={16} aria-hidden="true" />
+        <Sun size={17} aria-hidden="true" />
       ) : (
-        <Moon size={16} aria-hidden="true" />
+        <Moon size={17} aria-hidden="true" />
       )}
     </button>
   );
