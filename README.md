@@ -21,7 +21,7 @@ https://domain.ru/p/<shareSlug>
 ```
 
 Only the private `shareSlug` is in the URL. Proposal data stays in Supabase, or
-in `.data/proposals.json` when Supabase env is not configured.
+in `/app/.data/proposals.json` when Supabase env is not configured.
 
 Public routes:
 
@@ -111,15 +111,15 @@ For production Supabase, apply `supabase/migrations/20260531000000_proposal_arch
 
 Current Docker shape:
 
-- `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `price-presentation-web:latest`, with `.data` mounted for file-store public sharing fallback.
+- `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `price-presentation-web:latest`, with the `price-presentation-data` Docker volume mounted at `/app/.data` for file-store public sharing fallback.
 - `archive-worker`: separate `worker` Docker target and image `price-presentation-archive-worker:latest`, enabled only with `--profile worker`.
-- `.data`: bind mount for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used.
+- `price-presentation-data`: named Docker volume for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used. The image creates `/app/.data` as `nextjs:nodejs` so the non-root app can write temp files safely.
 
 Public sharing env:
 
 - `PROPOSAL_PUBLIC_ORIGIN`: canonical public origin used to copy `/p/<shareSlug>` links.
 - `PROPOSAL_ACCESS_SECRET`: secret for password-gate HMAC cookies.
-- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: use Supabase instead of `.data/proposals.json`.
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: use Supabase instead of `/app/.data/proposals.json`.
 - `SUPABASE_EVENTS_TABLE`: optional events table override, defaults to `proposal_events`.
 
 Archive worker scheduling:
@@ -138,6 +138,6 @@ Sizing guidance for a polished demo deployment:
 
 - CPU: `0.5 vCPU` for web; the one-shot archive worker may briefly add up to `0.2 vCPU`.
 - RAM: `0.4-0.8 GB` for web; worker memory is transient and capped at `192 MB`.
-- Disk: `2-5 GB` for the optimized web/worker images plus `.data` and archive volume.
+- Disk: `2-5 GB` for the optimized web/worker images plus the `price-presentation-data` volume.
 
 If DOPLIST starts receiving real traffic instead of demo load, raise web `mem_limit` to `1g` and remove or increase `NODE_OPTIONS=--max-old-space-size`.

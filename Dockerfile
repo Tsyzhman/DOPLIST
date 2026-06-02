@@ -35,7 +35,10 @@ ENV HOSTNAME=0.0.0.0 \
     NODE_ENV=production \
     PORT=3000
 
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+RUN addgroup -S nodejs \
+  && adduser -S nextjs -G nodejs \
+  && mkdir -p /app/.data \
+  && chown -R nextjs:nodejs /app/.data
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -57,7 +60,10 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+RUN addgroup -S nodejs \
+  && adduser -S nextjs -G nodejs \
+  && mkdir -p /app/.data \
+  && chown -R nextjs:nodejs /app/.data
 
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=prod-deps --chown=nextjs:nodejs /app/package.json ./package.json
