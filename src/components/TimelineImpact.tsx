@@ -14,7 +14,8 @@ export function TimelineImpact({ data }: TimelineImpactProps) {
   const maxDays = Math.max(...includedItems.map((item) => item.estimatedDays), 1);
 
   return (
-    <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
+    <section className="proposal-section border-t border-zinc-200 px-5 py-12">
+      <div className="mx-auto max-w-6xl">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
@@ -80,6 +81,7 @@ export function TimelineImpact({ data }: TimelineImpactProps) {
             </div>
           </div>
         ))}
+      </div>
       </div>
     </section>
   );

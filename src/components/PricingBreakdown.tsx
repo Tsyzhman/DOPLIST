@@ -27,7 +27,8 @@ export function PricingBreakdown({
   const grandTotal = calculateGrandTotal(data.items);
 
   return (
-    <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
+    <section className="proposal-section border-t border-zinc-200 px-5 py-12">
+      <div className="mx-auto max-w-6xl">
       <SectionHeading
         eyebrow="Бюджет"
         title="Стоимость по позициям"
@@ -83,6 +84,7 @@ export function PricingBreakdown({
           {data.project.paymentTerms}
         </div>
       ) : null}
+      </div>
     </section>
   );
 }

@@ -24,12 +24,21 @@ type ProposalPreviewProps = {
   data: ProposalData;
   onToggleOptional?: (id: string, selected: boolean) => void;
   readOnly?: boolean;
+  /**
+   * When `true` (default) the document is rendered inside a rounded
+   * card with a subtle border — used in the builder preview tab and
+   * the right column. Set to `false` for the public client view so
+   * sections stretch edge-to-edge on top of the page background,
+   * matching PRISMA's layout.
+   */
+  boxed?: boolean;
 };
 
 export function ProposalPreview({
   data,
   onToggleOptional,
   readOnly = false,
+  boxed = true,
 }: ProposalPreviewProps) {
   const requiredItems = data.items.filter((item) => item.required);
   const optionalItems = data.items.filter((item) => item.optional);
@@ -52,7 +61,13 @@ export function ProposalPreview({
   ].filter(Boolean);
 
   return (
-    <article className="proposal-preview overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-200/70">
+    <article
+      className={
+        boxed
+          ? "proposal-preview overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-200/70"
+          : "proposal-preview"
+      }
+    >
       <section className="relative overflow-hidden border-b border-zinc-200 bg-white text-zinc-950">
         <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 lg:grid-cols-[1fr_320px] lg:py-20">
           <div>
@@ -99,58 +114,62 @@ export function ProposalPreview({
         </div>
       </section>
 
-      <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
-        <SectionHeading
-          eyebrow="Краткое резюме"
-          title="Ключевые выводы"
-          copy="Proposal разделяет обязательный объем и опции, чтобы быстро согласовать бюджет, сроки и границы работ."
-        />
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {highlights.slice(0, 5).map((highlight, index) => (
-            <div
-              key={highlight}
-              className="proposal-card rounded-lg border border-zinc-200 bg-zinc-50 p-4"
-            >
-              <div className="flex gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-sm font-semibold text-emerald-700 shadow-sm">
-                  {index + 1}
-                </span>
-                <p className="text-sm leading-6 text-zinc-700">{highlight}</p>
+      <section className="proposal-section border-t border-zinc-200 px-5 py-12">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="Краткое резюме"
+            title="Ключевые выводы"
+            copy="Proposal разделяет обязательный объем и опции, чтобы быстро согласовать бюджет, сроки и границы работ."
+          />
+          <div className="mt-6 grid gap-3 md:grid-cols-2">
+            {highlights.slice(0, 5).map((highlight, index) => (
+              <div
+                key={highlight}
+                className="proposal-card rounded-lg border border-zinc-200 bg-zinc-50 p-4"
+              >
+                <div className="flex gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-sm font-semibold text-emerald-700 shadow-sm">
+                    {index + 1}
+                  </span>
+                  <p className="text-sm leading-6 text-zinc-700">{highlight}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
-        <SectionHeading
-          eyebrow="Обзор корректировок"
-          title="Состав корректировок"
-          copy="Позиции сгруппированы по категории. В каждой карточке показаны ценность для клиента, бюджет, сроки и детали объема."
-        />
+      <section className="proposal-section border-t border-zinc-200 px-5 py-12">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="Обзор корректировок"
+            title="Состав корректировок"
+            copy="Позиции сгруппированы по категории. В каждой карточке показаны ценность для клиента, бюджет, сроки и детали объема."
+          />
 
-        <div className="mt-8 space-y-8">
-          {grouped.map((group) => (
-            <div key={group.category}>
-              <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500">
-                  {categoryLabels[group.category]}
-                </h3>
-                <span className="text-xs text-zinc-500">
-                  {group.items.length} поз.
-                </span>
+          <div className="mt-8 space-y-8">
+            {grouped.map((group) => (
+              <div key={group.category}>
+                <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                    {categoryLabels[group.category]}
+                  </h3>
+                  <span className="text-xs text-zinc-500">
+                    {group.items.length} поз.
+                  </span>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {group.items.map((item) => (
+                    <ChangePreviewCard
+                      key={item.id}
+                      item={item}
+                      currency={data.project.currency}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {group.items.map((item) => (
-                  <ChangePreviewCard
-                    key={item.id}
-                    item={item}
-                    currency={data.project.currency}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -161,30 +180,34 @@ export function ProposalPreview({
       />
       <TimelineImpact data={data} />
 
-      <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
-        <SectionHeading
-          eyebrow="Допущения"
-          title="Условия оценки"
-          copy="Оценка действительна при сохранении этих условий."
-        />
-        <ListBlock
-          icon={<ShieldCheck size={18} aria-hidden="true" />}
-          items={assumptions}
-          empty="Условия пока не заполнены."
-        />
+      <section className="proposal-section border-t border-zinc-200 px-5 py-12">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="Допущения"
+            title="Условия оценки"
+            copy="Оценка действительна при сохранении этих условий."
+          />
+          <ListBlock
+            icon={<ShieldCheck size={18} aria-hidden="true" />}
+            items={assumptions}
+            empty="Условия пока не заполнены."
+          />
+        </div>
       </section>
 
-      <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
-        <SectionHeading
-          eyebrow="Не входит в объем"
-          title="Что не входит"
-          copy="Этот блок помогает избежать неучтенных ожиданий и разрастания объема до старта работ."
-        />
-        <ListBlock
-          icon={<Layers3 size={18} aria-hidden="true" />}
-          items={outOfScope}
-          empty="Исключения пока не заполнены."
-        />
+      <section className="proposal-section border-t border-zinc-200 px-5 py-12">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="Не входит в объем"
+            title="Что не входит"
+            copy="Этот блок помогает избежать неучтенных ожиданий и разрастания объема до старта работ."
+          />
+          <ListBlock
+            icon={<Layers3 size={18} aria-hidden="true" />}
+            items={outOfScope}
+            empty="Исключения пока не заполнены."
+          />
+        </div>
       </section>
 
     </article>
