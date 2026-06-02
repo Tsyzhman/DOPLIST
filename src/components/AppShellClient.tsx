@@ -1,7 +1,6 @@
 "use client";
 
-import { Eye, Hammer, Save } from "@/components/icons";
-import type { ReactNode } from "react";
+import { Eye, Hammer, Layers3 } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { ChangeItemForm } from "./ChangeItemForm";
 import { ChangeItemList } from "./ChangeItemList";
@@ -14,6 +13,7 @@ import {
   ThemeToggle,
   type ThemeMode,
 } from "./ThemeToggle";
+import { Badge } from "./Ui";
 import {
   createDemoProposalData,
   createEmptyChangeItem,
@@ -292,73 +292,58 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
 
   return (
     <div className="doplist-theme min-h-screen bg-main text-ink">
-      <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur no-print">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+              <Layers3 size={18} aria-hidden="true" />
+            </div>
             <div>
-              <div className="text-2xl font-semibold tracking-[0.18em] text-zinc-950">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-emerald-50 text-emerald-800 ring-emerald-200">
+                  {hydrated ? notice : "Готовим localStorage"}
+                </Badge>
+              </div>
+              <h1 className="mt-1 text-base font-semibold tracking-[0.18em] text-zinc-950">
                 DOPLIST
-              </div>
-              <div className="mt-1 max-w-2xl text-xs font-medium uppercase tracking-[0.16em] text-zinc-500">
-                Digital Offer & Proposal List for Interactive Scope Tracking
-              </div>
+              </h1>
             </div>
           </div>
-          <div className="flex flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-end">
-            <div className="grid w-full flex-1 grid-cols-2 gap-3 lg:grid-cols-4">
-              <HeaderField
-                label="Проект"
-                value={data.project.projectTitle}
-                onChange={(projectTitle) => updateProject({ projectTitle })}
-              />
-              <HeaderField
-                label="Клиент"
-                value={data.project.clientName}
-                onChange={(clientName) => updateProject({ clientName })}
-              />
-              <HeaderField
-                label="Дата"
-                type="date"
-                value={data.project.proposalDate}
-                onChange={(proposalDate) => updateProject({ proposalDate })}
-              />
-              <HeaderField
-                label="Версия"
-                value={data.project.version}
-                onChange={(version) => updateProject({ version })}
-              />
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <ThemeToggle theme={theme} onChange={setTheme} />
-              <div className="grid h-10 w-full grid-cols-2 rounded-md border border-zinc-200 bg-zinc-50 p-1 sm:w-auto">
-                <ModeButton
-                  active={mode === "builder"}
-                  onClick={() => setMode("builder")}
-                  icon={<Hammer size={16} aria-hidden="true" />}
-                >
-                  Редактор
-                </ModeButton>
-                <ModeButton
-                  active={mode === "preview"}
-                  onClick={() => setMode("preview")}
-                  icon={<Eye size={16} aria-hidden="true" />}
-                >
-                  Презентация
-                </ModeButton>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <ThemeToggle theme={theme} onChange={setTheme} />
             <ImportExportControls
               data={data}
               onImport={importData}
               onCopyShareLink={copyShareLink}
               onReset={resetDemoData}
             />
-            <div className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600">
-              <Save size={14} aria-hidden="true" />
-              {hydrated ? notice : "Готовим localStorage"}
+            <div className="grid h-10 w-full grid-cols-2 rounded-md border border-zinc-200 bg-zinc-50 p-1 sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setMode("builder")}
+                aria-pressed={mode === "builder"}
+                className={`inline-flex items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition ${
+                  mode === "builder"
+                    ? "bg-paper text-zinc-950 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                <Hammer size={16} aria-hidden="true" />
+                Редактор
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("preview")}
+                aria-pressed={mode === "preview"}
+                className={`inline-flex items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition ${
+                  mode === "preview"
+                    ? "bg-paper text-zinc-950 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                <Eye size={16} aria-hidden="true" />
+                Презентация
+              </button>
             </div>
           </div>
         </div>
@@ -418,58 +403,4 @@ function normalizeItem(item: ChangeItem): ChangeItem {
     optional: !required,
     selected: required ? true : item.selected,
   };
-}
-
-function HeaderField({
-  label,
-  value,
-  type = "text",
-  onChange,
-}: {
-  label: string;
-  value: string;
-  type?: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block min-w-0">
-      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-        {label}
-      </span>
-      <input
-        aria-label={label}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-      />
-    </label>
-  );
-}
-
-function ModeButton({
-  active,
-  icon,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  icon: ReactNode;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition ${
-        active
-          ? "bg-white text-zinc-950 shadow-sm"
-          : "text-zinc-500 hover:text-zinc-900"
-      }`}
-    >
-      {icon}
-      {children}
-    </button>
-  );
 }

@@ -177,9 +177,19 @@ export type Category =
 
 export type Priority = "low" | "medium" | "high";
 
-export type Status = "proposed" | "approved" | "rejected" | "postponed";
+export type Status = "draft" | "proposed" | "approved" | "rejected";
 
 export type Unit = "fixed" | "hour" | "day" | "item";
+
+export type ChangeItemType = "required" | "optional";
+
+export type EstimateConfidence = "low" | "medium" | "high";
+
+export type EstimateSource =
+  | "ai_estimate"
+  | "user_confirmed"
+  | "system_calculated"
+  | "rate_card";
 
 export type ProjectSettings = {
   projectTitle: string;
@@ -221,6 +231,67 @@ export type ChangeItem = {
 export type ProposalData = {
   project: ProjectSettings;
   items: ChangeItem[];
+};
+
+export type DoplistJsonProject = Omit<
+  ProjectSettings,
+  "assumptions" | "outOfScope"
+> & {
+  assumptions: string[];
+  outOfScope: string[];
+};
+
+export type DoplistJsonPricing = {
+  quantity: number;
+  unit: Unit;
+  price: number;
+  currency: string;
+  source?: EstimateSource | null;
+  confidence?: EstimateConfidence | null;
+};
+
+export type DoplistJsonTimeline = {
+  estimatedDays: number;
+  source?: EstimateSource | null;
+  confidence?: EstimateConfidence | null;
+};
+
+export type DoplistJsonSelection = {
+  selected: boolean;
+};
+
+export type DoplistJsonNotes = {
+  dependencyNote: string | null;
+  internalNote: string | null;
+};
+
+export type DoplistJsonItem = {
+  id?: string;
+  title: string;
+  category: Category;
+  type: ChangeItemType;
+  status: Status;
+  priority: Priority;
+  description: string;
+  clientValue: string;
+  deliverables: string[];
+  outOfScope: string[];
+  pricing: DoplistJsonPricing;
+  timeline: DoplistJsonTimeline;
+  selection: DoplistJsonSelection;
+  notes: DoplistJsonNotes;
+};
+
+export type DoplistProposalJson = {
+  project: DoplistJsonProject;
+  items: DoplistJsonItem[];
+};
+
+export type DoplistAiInputItem = Omit<DoplistJsonItem, "id">;
+
+export type DoplistAiInputData = {
+  project: DoplistJsonProject;
+  items: DoplistAiInputItem[];
 };
 
 export type ProposalMode = "builder" | "preview";

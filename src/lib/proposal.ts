@@ -5,6 +5,12 @@ import {
 import type {
   Category,
   ChangeItem,
+  ChangeItemType,
+  DoplistAiInputData,
+  DoplistJsonItem,
+  DoplistProposalJson,
+  EstimateConfidence,
+  EstimateSource,
   Priority,
   ProposalData,
   Status,
@@ -27,8 +33,20 @@ export const categories: Category[] = [
 ];
 
 export const priorities: Priority[] = ["low", "medium", "high"];
-export const statuses: Status[] = ["proposed", "approved", "rejected", "postponed"];
+export const statuses: Status[] = ["draft", "proposed", "approved", "rejected"];
 export const units: Unit[] = ["fixed", "hour", "day", "item"];
+export const itemTypes: ChangeItemType[] = ["required", "optional"];
+export const estimateSources: EstimateSource[] = [
+  "ai_estimate",
+  "user_confirmed",
+  "system_calculated",
+  "rate_card",
+];
+export const estimateConfidences: EstimateConfidence[] = [
+  "low",
+  "medium",
+  "high",
+];
 
 export const categoryLabels: Record<Category, string> = {
   Design: "Дизайн",
@@ -48,10 +66,10 @@ export const priorityLabels: Record<Priority, string> = {
 };
 
 export const statusLabels: Record<Status, string> = {
+  draft: "Черновик",
   proposed: "Предложено",
   approved: "Согласовано",
   rejected: "Отклонено",
-  postponed: "Отложено",
 };
 
 export const unitLabels: Record<Unit, string> = {
@@ -60,6 +78,171 @@ export const unitLabels: Record<Unit, string> = {
   day: "День",
   item: "Позиция",
 };
+
+export const doplistProposalJsonSchema = createDoplistJsonSchema({
+  includeSystemId: true,
+});
+
+export const doplistAiInputJsonSchema = createDoplistJsonSchema({
+  includeSystemId: false,
+});
+
+function createDoplistJsonSchema({
+  includeSystemId,
+}: {
+  includeSystemId: boolean;
+}) {
+  const noteProperty = {
+    anyOf: [{ type: "string" }, { type: "null" }],
+  };
+  const estimateMeta = {
+    source: {
+      anyOf: [{ enum: estimateSources }, { type: "null" }],
+    },
+    confidence: {
+      anyOf: [{ enum: estimateConfidences }, { type: "null" }],
+    },
+  };
+
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    title: includeSystemId
+      ? "DOPLIST proposal JSON"
+      : "DOPLIST AI input JSON",
+    type: "object",
+    additionalProperties: false,
+    required: ["project", "items"],
+    properties: {
+      project: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "projectTitle",
+          "clientName",
+          "preparedBy",
+          "proposalDate",
+          "version",
+          "currency",
+          "introSummary",
+          "paymentTerms",
+          "approvalUrl",
+          "discussionUrl",
+          "assumptions",
+          "outOfScope",
+          "notes",
+        ],
+        properties: {
+          projectTitle: { type: "string" },
+          clientName: { type: "string" },
+          preparedBy: { type: "string" },
+          proposalDate: { type: "string", format: "date" },
+          version: { type: "string" },
+          currency: { type: "string", minLength: 3, maxLength: 3 },
+          introSummary: { type: "string" },
+          paymentTerms: { type: "string" },
+          approvalUrl: { type: "string" },
+          discussionUrl: { type: "string" },
+          assumptions: {
+            type: "array",
+            items: { type: "string" },
+          },
+          outOfScope: {
+            type: "array",
+            items: { type: "string" },
+          },
+          notes: { type: "string" },
+        },
+      },
+      items: {
+        type: "array",
+        items: createDoplistItemJsonSchema(includeSystemId, noteProperty, estimateMeta),
+      },
+    },
+  } as const;
+}
+
+function createDoplistItemJsonSchema(
+  includeSystemId: boolean,
+  noteProperty: Record<string, unknown>,
+  estimateMeta: Record<string, unknown>,
+) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: [
+      ...(includeSystemId ? ["id"] : []),
+      "title",
+      "category",
+      "type",
+      "status",
+      "priority",
+      "description",
+      "clientValue",
+      "deliverables",
+      "outOfScope",
+      "pricing",
+      "timeline",
+      "selection",
+      "notes",
+    ],
+    properties: {
+      ...(includeSystemId ? { id: { type: "string" } } : {}),
+      title: { type: "string" },
+      category: { enum: categories },
+      type: { enum: itemTypes },
+      status: { enum: statuses },
+      priority: { enum: priorities },
+      description: { type: "string" },
+      clientValue: { type: "string" },
+      deliverables: {
+        type: "array",
+        items: { type: "string" },
+      },
+      outOfScope: {
+        type: "array",
+        items: { type: "string" },
+      },
+      pricing: {
+        type: "object",
+        additionalProperties: false,
+        required: ["quantity", "unit", "price", "currency"],
+        properties: {
+          quantity: { type: "number", minimum: 1 },
+          unit: { enum: units },
+          price: { type: "number", minimum: 0 },
+          currency: { type: "string", minLength: 3, maxLength: 3 },
+          ...estimateMeta,
+        },
+      },
+      timeline: {
+        type: "object",
+        additionalProperties: false,
+        required: ["estimatedDays"],
+        properties: {
+          estimatedDays: { type: "number", minimum: 0 },
+          ...estimateMeta,
+        },
+      },
+      selection: {
+        type: "object",
+        additionalProperties: false,
+        required: ["selected"],
+        properties: {
+          selected: { type: "boolean" },
+        },
+      },
+      notes: {
+        type: "object",
+        additionalProperties: false,
+        required: ["dependencyNote", "internalNote"],
+        properties: {
+          dependencyNote: noteProperty,
+          internalNote: noteProperty,
+        },
+      },
+    },
+  } as const;
+}
 
 export function createId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -348,6 +531,114 @@ export function createDemoProposalData(): ProposalData {
   };
 }
 
+export function createDoplistAiInputExampleData(): DoplistAiInputData {
+  return toDoplistProposalJson(createDemoProposalData(), {
+    includeSystemIds: false,
+    estimateConfidence: "medium",
+    estimateSource: "ai_estimate",
+  }) as DoplistAiInputData;
+}
+
+export function exportProposalDataForJson(data: ProposalData): DoplistProposalJson {
+  return toDoplistProposalJson(normalizeProposalData(data) || data, {
+    includeSystemIds: true,
+    estimateConfidence: "high",
+    estimateSource: "user_confirmed",
+  }) as DoplistProposalJson;
+}
+
+function toDoplistProposalJson(
+  data: ProposalData,
+  {
+    estimateConfidence,
+    estimateSource,
+    includeSystemIds,
+  }: {
+    estimateConfidence: EstimateConfidence;
+    estimateSource: EstimateSource;
+    includeSystemIds: boolean;
+  },
+): DoplistProposalJson | DoplistAiInputData {
+  return {
+    project: {
+      projectTitle: data.project.projectTitle,
+      clientName: data.project.clientName,
+      preparedBy: data.project.preparedBy,
+      proposalDate: data.project.proposalDate,
+      version: data.project.version,
+      currency: data.project.currency || "RUB",
+      introSummary: data.project.introSummary,
+      paymentTerms: data.project.paymentTerms,
+      approvalUrl: data.project.approvalUrl,
+      discussionUrl: data.project.discussionUrl,
+      assumptions: toList(data.project.assumptions),
+      outOfScope: toList(data.project.outOfScope),
+      notes: data.project.notes,
+    },
+    items: data.items.map((item) =>
+      toDoplistItemJson(item, data.project.currency || "RUB", {
+        estimateConfidence,
+        estimateSource,
+        includeSystemId: includeSystemIds,
+      }),
+    ),
+  };
+}
+
+function toDoplistItemJson(
+  item: ChangeItem,
+  currency: string,
+  {
+    estimateConfidence,
+    estimateSource,
+    includeSystemId,
+  }: {
+    estimateConfidence: EstimateConfidence;
+    estimateSource: EstimateSource;
+    includeSystemId: boolean;
+  },
+): DoplistJsonItem {
+  const type: ChangeItemType = item.required ? "required" : "optional";
+  const baseItem: Omit<DoplistJsonItem, "id"> = {
+    title: item.title,
+    category: item.category,
+    type,
+    status: item.status,
+    priority: item.priority,
+    description: item.description,
+    clientValue: item.clientValue,
+    deliverables: item.deliverables,
+    outOfScope: item.outOfScope,
+    pricing: {
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+      currency,
+      source: estimateSource,
+      confidence: estimateConfidence,
+    },
+    timeline: {
+      estimatedDays: item.estimatedDays,
+      source: estimateSource,
+      confidence: estimateConfidence,
+    },
+    selection: {
+      selected: type === "required" ? true : item.selected,
+    },
+    notes: {
+      dependencyNote: emptyToNull(item.dependencyNote),
+      internalNote: emptyToNull(item.internalNote),
+    },
+  };
+
+  return includeSystemId
+    ? {
+        id: item.id || createId(),
+        ...baseItem,
+      }
+    : baseItem;
+}
+
 export function encodeProposalForShare(data: ProposalData) {
   return compressToEncodedURIComponent(JSON.stringify(data));
 }
@@ -376,37 +667,470 @@ export function buildPublicProposalUrl(origin: string, shareSlug: string) {
   return url.toString();
 }
 
+export function validateDoplistAiInputData(value: unknown) {
+  return validateDoplistJsonData(value, {
+    allowSystemIds: false,
+    requireSystemIds: false,
+  });
+}
+
+export function validateDoplistProposalJsonData(value: unknown) {
+  return validateDoplistJsonData(value, {
+    allowSystemIds: true,
+    requireSystemIds: true,
+  });
+}
+
+function validateDoplistJsonData(
+  value: unknown,
+  {
+    allowSystemIds,
+    requireSystemIds,
+  }: {
+    allowSystemIds: boolean;
+    requireSystemIds: boolean;
+  },
+) {
+  const errors: string[] = [];
+
+  if (!isRecordValue(value)) {
+    return { valid: false, errors: ["root must be an object"] };
+  }
+
+  validateAllowedKeys(value, "root", ["project", "items"], errors);
+
+  if (!isRecordValue(value.project)) {
+    errors.push("project must be an object");
+  } else {
+    validateAllowedKeys(
+      value.project,
+      "project",
+      [
+        "projectTitle",
+        "clientName",
+        "preparedBy",
+        "proposalDate",
+        "version",
+        "currency",
+        "introSummary",
+        "paymentTerms",
+        "approvalUrl",
+        "discussionUrl",
+        "assumptions",
+        "outOfScope",
+        "notes",
+      ],
+      errors,
+    );
+    validateRequiredKeys(
+      value.project,
+      "project",
+      [
+        "projectTitle",
+        "clientName",
+        "preparedBy",
+        "proposalDate",
+        "version",
+        "currency",
+        "introSummary",
+        "paymentTerms",
+        "approvalUrl",
+        "discussionUrl",
+        "assumptions",
+        "outOfScope",
+        "notes",
+      ],
+      errors,
+    );
+    validateStringList(value.project.assumptions, "project.assumptions", errors);
+    validateStringList(value.project.outOfScope, "project.outOfScope", errors);
+  }
+
+  if (!Array.isArray(value.items)) {
+    errors.push("items must be an array");
+  } else {
+    value.items.forEach((item, index) =>
+      validateDoplistJsonItem(item, `items[${index}]`, {
+        allowSystemIds,
+        requireSystemIds,
+        errors,
+      }),
+    );
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+function validateDoplistJsonItem(
+  item: unknown,
+  path: string,
+  {
+    allowSystemIds,
+    requireSystemIds,
+    errors,
+  }: {
+    allowSystemIds: boolean;
+    requireSystemIds: boolean;
+    errors: string[];
+  },
+) {
+  if (!isRecordValue(item)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+
+  const itemKeys = [
+    ...(allowSystemIds ? ["id"] : []),
+    "title",
+    "category",
+    "type",
+    "status",
+    "priority",
+    "description",
+    "clientValue",
+    "deliverables",
+    "outOfScope",
+    "pricing",
+    "timeline",
+    "selection",
+    "notes",
+  ];
+  validateAllowedKeys(item, path, itemKeys, errors);
+  validateRequiredKeys(
+    item,
+    path,
+    [
+      ...(requireSystemIds ? ["id"] : []),
+      "title",
+      "category",
+      "type",
+      "status",
+      "priority",
+      "description",
+      "clientValue",
+      "deliverables",
+      "outOfScope",
+      "pricing",
+      "timeline",
+      "selection",
+      "notes",
+    ],
+    errors,
+  );
+  validateEnum(item.category, categories, `${path}.category`, errors);
+  validateEnum(item.type, itemTypes, `${path}.type`, errors);
+  validateEnum(item.status, statuses, `${path}.status`, errors);
+  validateEnum(item.priority, priorities, `${path}.priority`, errors);
+  validateStringList(item.deliverables, `${path}.deliverables`, errors);
+  validateStringList(item.outOfScope, `${path}.outOfScope`, errors);
+  validatePricing(item.pricing, `${path}.pricing`, errors);
+  validateTimeline(item.timeline, `${path}.timeline`, errors);
+  validateSelection(item.selection, `${path}.selection`, errors);
+  validateNotes(item.notes, `${path}.notes`, errors);
+}
+
+function validatePricing(value: unknown, path: string, errors: string[]) {
+  if (!isRecordValue(value)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+
+  validateAllowedKeys(
+    value,
+    path,
+    ["quantity", "unit", "price", "currency", "source", "confidence"],
+    errors,
+  );
+  validateRequiredKeys(value, path, ["quantity", "unit", "price", "currency"], errors);
+  validateEnum(value.unit, units, `${path}.unit`, errors);
+  validateNullableEnum(value.source, estimateSources, `${path}.source`, errors);
+  validateNullableEnum(
+    value.confidence,
+    estimateConfidences,
+    `${path}.confidence`,
+    errors,
+  );
+}
+
+function validateTimeline(value: unknown, path: string, errors: string[]) {
+  if (!isRecordValue(value)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+
+  validateAllowedKeys(
+    value,
+    path,
+    ["estimatedDays", "source", "confidence"],
+    errors,
+  );
+  validateRequiredKeys(value, path, ["estimatedDays"], errors);
+  validateNullableEnum(value.source, estimateSources, `${path}.source`, errors);
+  validateNullableEnum(
+    value.confidence,
+    estimateConfidences,
+    `${path}.confidence`,
+    errors,
+  );
+}
+
+function validateSelection(value: unknown, path: string, errors: string[]) {
+  if (!isRecordValue(value)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+
+  validateAllowedKeys(value, path, ["selected"], errors);
+  validateRequiredKeys(value, path, ["selected"], errors);
+
+  if (typeof value.selected !== "boolean") {
+    errors.push(`${path}.selected must be a boolean`);
+  }
+}
+
+function validateNotes(value: unknown, path: string, errors: string[]) {
+  if (!isRecordValue(value)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+
+  validateAllowedKeys(value, path, ["dependencyNote", "internalNote"], errors);
+  validateRequiredKeys(value, path, ["dependencyNote", "internalNote"], errors);
+
+  for (const key of ["dependencyNote", "internalNote"]) {
+    if (typeof value[key] !== "string" && value[key] !== null) {
+      errors.push(`${path}.${key} must be a string or null`);
+    }
+  }
+}
+
 export function normalizeProposalData(value: unknown): ProposalData | null {
   if (!value || typeof value !== "object") {
     return null;
   }
 
-  const candidate = value as ProposalData;
+  const candidate = value as Partial<ProposalData>;
 
   if (!candidate.project || !Array.isArray(candidate.items)) {
     return null;
   }
 
   return {
-    project: {
-      ...createDemoProposalData().project,
-      ...candidate.project,
-      currency: candidate.project.currency || "RUB",
-    },
-    items: candidate.items.map((item) => ({
-      ...createEmptyChangeItem(),
-      ...item,
-      id: item.id || createId(),
-      price: Math.max(0, Number(item.price) || 0),
-      quantity: Math.max(1, Number(item.quantity) || 1),
-      estimatedDays: Math.max(0, Number(item.estimatedDays) || 0),
-      required: Boolean(item.required),
-      optional: Boolean(item.optional),
-      selected: Boolean(item.selected),
-      deliverables: Array.isArray(item.deliverables) ? item.deliverables : [],
-      outOfScope: Array.isArray(item.outOfScope) ? item.outOfScope : [],
-    })),
+    project: normalizeProjectSettings(candidate.project),
+    items: candidate.items.map(normalizeChangeItem),
   };
+}
+
+function normalizeProjectSettings(value: unknown): ProposalData["project"] {
+  const base = createDemoProposalData().project;
+  const source = asRecord(value);
+
+  return {
+    projectTitle: readStringValue(source.projectTitle, base.projectTitle),
+    clientName: readStringValue(source.clientName, base.clientName),
+    preparedBy: readStringValue(source.preparedBy, base.preparedBy),
+    proposalDate: readStringValue(source.proposalDate, base.proposalDate),
+    version: readStringValue(source.version, base.version),
+    currency: readStringValue(source.currency, base.currency).toUpperCase() || "RUB",
+    introSummary: readStringValue(source.introSummary, base.introSummary),
+    paymentTerms: readStringValue(source.paymentTerms, base.paymentTerms),
+    approvalUrl: readStringValue(source.approvalUrl, base.approvalUrl),
+    discussionUrl: readStringValue(source.discussionUrl, base.discussionUrl),
+    assumptions: fromList(readStringList(source.assumptions, toList(base.assumptions))),
+    outOfScope: fromList(readStringList(source.outOfScope, toList(base.outOfScope))),
+    notes: readStringValue(source.notes, base.notes),
+  };
+}
+
+function normalizeChangeItem(value: unknown): ChangeItem {
+  const source = asRecord(value);
+  const pricing = asRecord(source.pricing);
+  const timeline = asRecord(source.timeline);
+  const selection = asRecord(source.selection);
+  const notes = asRecord(source.notes);
+  const type = normalizeItemType(source);
+  const required = type === "required";
+  const selected = required
+    ? true
+    : readBooleanValue(selection.selected, readBooleanValue(source.selected, false));
+
+  return {
+    ...createEmptyChangeItem(),
+    id: readStringValue(source.id, createId()),
+    title: readStringValue(source.title, ""),
+    category: normalizeEnum(source.category, categories, "Other"),
+    description: readStringValue(source.description, ""),
+    clientValue: readStringValue(source.clientValue, ""),
+    deliverables: readStringList(source.deliverables),
+    outOfScope: readStringList(source.outOfScope),
+    price: Math.max(
+      0,
+      readNumberValue(pricing.price, readNumberValue(source.price, 0)),
+    ),
+    quantity: Math.max(
+      1,
+      readNumberValue(pricing.quantity, readNumberValue(source.quantity, 1)),
+    ),
+    unit: normalizeEnum(pricing.unit ?? source.unit, units, "fixed"),
+    estimatedDays: Math.max(
+      0,
+      readNumberValue(
+        timeline.estimatedDays,
+        readNumberValue(source.estimatedDays, 0),
+      ),
+    ),
+    priority: normalizeEnum(source.priority, priorities, "medium"),
+    required,
+    optional: type === "optional",
+    selected,
+    status: normalizeEnum(source.status, statuses, "proposed"),
+    dependencyNote: readStringValue(
+      notes.dependencyNote,
+      readStringValue(source.dependencyNote, ""),
+    ),
+    internalNote: readStringValue(
+      notes.internalNote,
+      readStringValue(source.internalNote, ""),
+    ),
+  };
+}
+
+function normalizeItemType(source: Record<string, unknown>): ChangeItemType {
+  if (itemTypes.includes(source.type as ChangeItemType)) {
+    return source.type as ChangeItemType;
+  }
+
+  if (readBooleanValue(source.required, false)) {
+    return "required";
+  }
+
+  if (readBooleanValue(source.optional, false)) {
+    return "optional";
+  }
+
+  return "required";
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateAllowedKeys(
+  value: Record<string, unknown>,
+  path: string,
+  allowedKeys: string[],
+  errors: string[],
+) {
+  const allowed = new Set(allowedKeys);
+
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) {
+      errors.push(`${path}.${key} is not allowed`);
+    }
+  }
+}
+
+function validateRequiredKeys(
+  value: Record<string, unknown>,
+  path: string,
+  requiredKeys: string[],
+  errors: string[],
+) {
+  for (const key of requiredKeys) {
+    if (!(key in value)) {
+      errors.push(`${path}.${key} is required`);
+    }
+  }
+}
+
+function validateStringList(value: unknown, path: string, errors: string[]) {
+  if (!Array.isArray(value)) {
+    errors.push(`${path} must be an array`);
+    return;
+  }
+
+  value.forEach((item, index) => {
+    if (typeof item !== "string") {
+      errors.push(`${path}[${index}] must be a string`);
+    }
+  });
+}
+
+function validateEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  path: string,
+  errors: string[],
+) {
+  if (!allowed.includes(value as T)) {
+    errors.push(`${path} must be one of: ${allowed.join(", ")}`);
+  }
+}
+
+function validateNullableEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  path: string,
+  errors: string[],
+) {
+  if (value !== undefined && value !== null && !allowed.includes(value as T)) {
+    errors.push(`${path} must be null or one of: ${allowed.join(", ")}`);
+  }
+}
+
+function readStringValue(value: unknown, fallback: string) {
+  return typeof value === "string" ? value : fallback;
+}
+
+function readNumberValue(value: unknown, fallback: number) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function readBooleanValue(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+  }
+
+  return fallback;
+}
+
+function readStringList(value: unknown, fallback: string[] = []) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return toList(value);
+  }
+
+  return fallback;
+}
+
+function normalizeEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T,
+) {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+function emptyToNull(value: string) {
+  const trimmed = value.trim();
+
+  return trimmed ? trimmed : null;
 }
 
 function makeDemoItem(

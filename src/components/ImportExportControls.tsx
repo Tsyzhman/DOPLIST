@@ -1,6 +1,9 @@
 import { Download, FileUp, Link2, RotateCcw, Sparkles } from "@/components/icons";
 import { useRef } from "react";
-import { createDemoProposalData } from "@/lib/proposal";
+import {
+  createDoplistAiInputExampleData,
+  exportProposalDataForJson,
+} from "@/lib/proposal";
 import type { ProposalData } from "@/lib/types";
 
 type ImportExportControlsProps = {
@@ -37,11 +40,11 @@ export function ImportExportControls({
         .replace(/[^a-zа-я0-9]+/gi, "-")
         .replace(/^-|-$/g, "") || "change-proposal";
 
-    downloadJson(data, `${safeTitle}.json`);
+    downloadJson(exportProposalDataForJson(data), `${safeTitle}.json`);
   }
 
   function downloadExample() {
-    downloadJson(createDemoProposalData(), "doplist-example.json");
+    downloadJson(createDoplistAiInputExampleData(), "doplist-example.json");
   }
 
   async function importJson(file: File | undefined) {
