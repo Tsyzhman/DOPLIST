@@ -1,9 +1,14 @@
 "use client";
 
 import { CheckCircle2, MessageSquareText, Printer } from "@/components/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ProposalData, ProposalEventType } from "@/lib/types";
 import { ProposalPreview } from "./ProposalPreview";
+import {
+  THEME_STORAGE_KEY,
+  ThemeToggle,
+  type ThemeMode,
+} from "./ThemeToggle";
 
 type PublicProposalViewProps = {
   data: ProposalData;
@@ -17,8 +22,31 @@ export function PublicProposalView({
   allowPackageSelection,
 }: PublicProposalViewProps) {
   const [data, setData] = useState(initialData);
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [themeHydrated, setThemeHydrated] = useState(false);
   const approvalDestination = normalizeCtaUrl(data.project.approvalUrl);
   const discussionDestination = normalizeCtaUrl(data.project.discussionUrl);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+
+      if (storedTheme === "light" || storedTheme === "dark") {
+        setTheme(storedTheme);
+      }
+      setThemeHydrated(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!themeHydrated) {
+      return;
+    }
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme, themeHydrated]);
 
   function toggleOptional(id: string, selected: boolean) {
     if (!allowPackageSelection) {
@@ -49,9 +77,12 @@ export function PublicProposalView({
   }
 
   return (
-    <div className="doplist-theme min-h-screen bg-zinc-100 text-zinc-950">
+    <div
+      className={`doplist-theme doplist-theme-${theme} min-h-screen bg-zinc-100 text-zinc-950`}
+    >
       <main className="mx-auto max-w-5xl px-4 py-6">
         <div className="no-print mb-4 flex flex-wrap justify-end gap-2">
+          <ThemeToggle theme={theme} onChange={setTheme} />
           <button
             type="button"
             disabled={!approvalDestination}

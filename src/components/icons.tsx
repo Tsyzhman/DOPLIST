@@ -18,6 +18,7 @@ export { default as FileUp } from "lucide-react/dist/esm/icons/file-up.mjs";
 export { default as Hammer } from "lucide-react/dist/esm/icons/hammer.mjs";
 export { default as Layers3 } from "lucide-react/dist/esm/icons/layers-3.mjs";
 export { default as Link2 } from "lucide-react/dist/esm/icons/link-2.mjs";
+export { default as Moon } from "lucide-react/dist/esm/icons/moon.mjs";
 export { default as MessageSquareText } from "lucide-react/dist/esm/icons/message-square-text.mjs";
 export { default as Pencil } from "lucide-react/dist/esm/icons/pencil.mjs";
 export { default as Plus } from "lucide-react/dist/esm/icons/plus.mjs";
@@ -26,6 +27,8 @@ export { default as RotateCcw } from "lucide-react/dist/esm/icons/rotate-ccw.mjs
 export { default as Save } from "lucide-react/dist/esm/icons/save.mjs";
 export { default as ShieldCheck } from "lucide-react/dist/esm/icons/shield-check.mjs";
 export { default as Square } from "lucide-react/dist/esm/icons/square.mjs";
+export { default as Sparkles } from "lucide-react/dist/esm/icons/sparkles.mjs";
+export { default as Sun } from "lucide-react/dist/esm/icons/sun.mjs";
 export { default as Trash2 } from "lucide-react/dist/esm/icons/trash-2.mjs";
 export { default as WalletCards } from "lucide-react/dist/esm/icons/wallet-cards.mjs";
 export { default as X } from "lucide-react/dist/esm/icons/x.mjs";

@@ -10,6 +10,11 @@ import { ProjectSettingsForm } from "./ProjectSettingsForm";
 import { ProposalPreview } from "./ProposalPreview";
 import { SummaryCard } from "./SummaryCard";
 import {
+  THEME_STORAGE_KEY,
+  ThemeToggle,
+  type ThemeMode,
+} from "./ThemeToggle";
+import {
   createDemoProposalData,
   createEmptyChangeItem,
   createId,
@@ -31,6 +36,7 @@ type AppShellClientProps = {
 export function AppShellClient({ initialData }: AppShellClientProps) {
   const [data, setData] = useState<ProposalData>(initialData);
   const [mode, setMode] = useState<ProposalMode>("builder");
+  const [theme, setTheme] = useState<ThemeMode>("dark");
   const [hydrated, setHydrated] = useState(false);
   const [serverProposalId, setServerProposalId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ChangeItem | null>(null);
@@ -41,13 +47,19 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
     let nextData: ProposalData | null = null;
     let nextNotice = "Загружены демо-данные";
     let nextServerProposalId: string | null = null;
+    let nextTheme: ThemeMode | null = null;
 
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       const storedRecordId = window.localStorage.getItem(PROPOSAL_RECORD_ID_KEY);
+      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
 
       if (storedRecordId) {
         nextServerProposalId = storedRecordId;
+      }
+
+      if (storedTheme === "light" || storedTheme === "dark") {
+        nextTheme = storedTheme;
       }
 
       if (stored) {
@@ -68,6 +80,9 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
       if (nextServerProposalId) {
         setServerProposalId(nextServerProposalId);
       }
+      if (nextTheme) {
+        setTheme(nextTheme);
+      }
       setNotice(nextNotice);
       setHydrated(true);
     }, 0);
@@ -82,6 +97,16 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  }, [theme, hydrated]);
 
   const activeId = editingId ?? editingItem?.id ?? null;
 
@@ -266,7 +291,7 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
   }
 
   return (
-    <div className="doplist-theme min-h-screen bg-zinc-100 text-zinc-950">
+    <div className="doplist-theme min-h-screen bg-main text-ink">
       <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -304,6 +329,7 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
               />
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <ThemeToggle theme={theme} onChange={setTheme} />
               <div className="grid h-10 w-full grid-cols-2 rounded-md border border-zinc-200 bg-zinc-50 p-1 sm:w-auto">
                 <ModeButton
                   active={mode === "builder"}

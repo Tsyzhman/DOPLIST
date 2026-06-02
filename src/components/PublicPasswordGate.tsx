@@ -1,7 +1,12 @@
 "use client";
 
 import { ShieldCheck } from "@/components/icons";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import {
+  THEME_STORAGE_KEY,
+  ThemeToggle,
+  type ThemeMode,
+} from "./ThemeToggle";
 
 type PublicPasswordGateProps = {
   shareSlug: string;
@@ -12,6 +17,29 @@ export function PublicPasswordGate({ shareSlug, title }: PublicPasswordGateProps
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [themeHydrated, setThemeHydrated] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+
+      if (storedTheme === "light" || storedTheme === "dark") {
+        setTheme(storedTheme);
+      }
+      setThemeHydrated(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!themeHydrated) {
+      return;
+    }
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme, themeHydrated]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +63,12 @@ export function PublicPasswordGate({ shareSlug, title }: PublicPasswordGateProps
   }
 
   return (
-    <div className="doplist-theme flex min-h-screen items-center justify-center bg-zinc-100 px-4 py-10 text-zinc-950">
+    <div
+      className={`doplist-theme doplist-theme-${theme} relative flex min-h-screen items-center justify-center bg-zinc-100 px-4 py-10 text-zinc-950`}
+    >
+      <div className="no-print absolute right-4 top-4">
+        <ThemeToggle theme={theme} onChange={setTheme} />
+      </div>
       <main className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
         <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
           <ShieldCheck size={22} aria-hidden="true" />

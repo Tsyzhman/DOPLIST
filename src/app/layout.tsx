@@ -1,34 +1,34 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Onest } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: [
-    {
-      path: "../../public/fonts/Geist-Regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/Geist-Medium.woff2",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/Geist-SemiBold.woff2",
-      weight: "600",
-      style: "normal",
-    },
-  ],
-  variable: "--font-geist-sans",
+const onest = Onest({
+  variable: "--font-onest",
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const geistMono = localFont({
-  src: "../../public/fonts/GeistMono-Regular.woff2",
-  variable: "--font-geist-mono",
-  display: "swap",
-});
+const THEME_STORAGE_KEY = "doplist-ui-theme-v1";
+
+const themeScript = `
+(() => {
+  try {
+    const storageKey = ${JSON.stringify(THEME_STORAGE_KEY)};
+    const stored = window.localStorage.getItem(storageKey);
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+    const theme = stored === "light" || stored === "dark" ? stored : systemTheme;
+
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
+  }
+})();
+`;
 
 export const metadata: Metadata = {
   title: "DOPLIST",
@@ -42,7 +42,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="ru"
+      className={`${onest.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

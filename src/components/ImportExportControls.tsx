@@ -1,5 +1,6 @@
-import { Download, FileUp, Link2, Printer, RotateCcw } from "@/components/icons";
+import { Download, FileUp, Link2, Printer, RotateCcw, Sparkles } from "@/components/icons";
 import { useRef } from "react";
+import { createDemoProposalData } from "@/lib/proposal";
 import type { ProposalData } from "@/lib/types";
 
 type ImportExportControlsProps = {
@@ -8,6 +9,18 @@ type ImportExportControlsProps = {
   onCopyShareLink: () => void;
   onReset: () => void;
 };
+
+function downloadJson(payload: unknown, filename: string) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function ImportExportControls({
   data,
@@ -18,21 +31,17 @@ export function ImportExportControls({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   function exportJson() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const safeTitle =
       data.project.projectTitle
         .toLowerCase()
         .replace(/[^a-zа-я0-9]+/gi, "-")
         .replace(/^-|-$/g, "") || "change-proposal";
 
-    link.href = url;
-    link.download = `${safeTitle}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadJson(data, `${safeTitle}.json`);
+  }
+
+  function downloadExample() {
+    downloadJson(createDemoProposalData(), "doplist-example.json");
   }
 
   async function importJson(file: File | undefined) {
@@ -66,6 +75,15 @@ export function ImportExportControls({
       >
         <FileUp size={16} aria-hidden="true" />
         Импорт JSON
+      </button>
+      <button
+        type="button"
+        onClick={downloadExample}
+        title="Скачать пример структуры, чтобы заполнить с помощью AI"
+        className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 shadow-sm transition hover:bg-emerald-100"
+      >
+        <Sparkles size={16} aria-hidden="true" />
+        Пример JSON для AI
       </button>
       <input
         ref={inputRef}
