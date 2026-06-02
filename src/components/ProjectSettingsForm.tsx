@@ -25,11 +25,6 @@ export function ProjectSettingsForm({
           onChange={(clientName) => onChange({ clientName })}
         />
         <TextInput
-          label="Подготовил"
-          value={value.preparedBy}
-          onChange={(preparedBy) => onChange({ preparedBy })}
-        />
-        <TextInput
           label="Дата"
           type="date"
           value={value.proposalDate}

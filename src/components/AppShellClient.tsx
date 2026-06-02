@@ -10,7 +10,6 @@ import {
   Save,
 } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
-import { ChangeItemForm } from "./ChangeItemForm";
 import { ChangeItemList } from "./ChangeItemList";
 import { ImportExportControls } from "./ImportExportControls";
 import { ProjectSettingsForm } from "./ProjectSettingsForm";
@@ -50,8 +49,6 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
   const [hydrated, setHydrated] = useState(false);
   const [serverProposalId, setServerProposalId] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState("");
-  const [editingItem, setEditingItem] = useState<ChangeItem | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("Готово к работе");
   const listStorageKey = useMemo(
     () => getScopeListDataStorageKey(listId),
@@ -137,7 +134,6 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
     document.documentElement.style.colorScheme = theme;
   }, [theme, hydrated]);
 
-  const activeId = editingId ?? editingItem?.id ?? null;
   const publicUrl = publishedUrl;
   const publicationLabel = publishedUrl ? "Опубликовано" : "Черновик";
   const publicationTone = publishedUrl
@@ -167,42 +163,24 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
     setNotice("Сохранено локально");
   }
 
-  function startAddItem() {
-    setEditingId(null);
-    setEditingItem(createEmptyChangeItem());
-  }
-
-  function startEditItem(item: ChangeItem) {
-    setEditingId(item.id);
-    setEditingItem({
-      ...item,
-      deliverables: [...item.deliverables],
-      outOfScope: [...item.outOfScope],
-    });
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditingItem(null);
-  }
-
-  function saveItem(item: ChangeItem) {
-    const normalized = normalizeItem(item);
-
-    if (!normalized.title.trim()) {
-      return;
-    }
-
+  function addItem() {
     setData((current) => ({
       ...current,
-      items: editingId
-        ? current.items.map((existing) =>
-            existing.id === editingId ? normalized : existing,
-          )
-        : [...current.items, normalized],
+      items: [...current.items, createEmptyChangeItem()],
     }));
     setNotice("Сохранено локально");
-    cancelEdit();
+  }
+
+  function updateItem(id: string, patch: Partial<ChangeItem>) {
+    setData((current) => ({
+      ...current,
+      items: current.items.map((existing) =>
+        existing.id === id
+          ? normalizeItem({ ...existing, ...patch })
+          : existing,
+      ),
+    }));
+    setNotice("Сохранено локально");
   }
 
   function duplicateItem(id: string) {
@@ -231,27 +209,6 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
       items: current.items.filter((item) => item.id !== id),
     }));
     setNotice("Сохранено локально");
-
-    if (editingId === id || editingItem?.id === id) {
-      cancelEdit();
-    }
-  }
-
-  function toggleItemType(id: string, type: "required" | "optional") {
-    setData((current) => ({
-      ...current,
-      items: current.items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              required: type === "required",
-              optional: type === "optional",
-              selected: type === "required" ? true : item.selected,
-            }
-          : item,
-      ),
-    }));
-    setNotice("Сохранено локально");
   }
 
   function toggleOptionalSelected(id: string, selected: boolean) {
@@ -275,7 +232,6 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
     }
 
     setData(parsed);
-    cancelEdit();
     setNotice("JSON импортирован");
   }
 
@@ -420,22 +376,13 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
         <main className="builder-grid relative z-10 mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="builder-panel space-y-5">
             <ProjectSettingsForm value={data.project} onChange={updateProject} />
-            <ChangeItemForm
-              item={editingItem}
-              isNew={!editingId}
-              onAdd={startAddItem}
-              onChange={setEditingItem}
-              onSave={saveItem}
-              onCancel={cancelEdit}
-            />
             <ChangeItemList
               items={sortedItems}
               currency={data.project.currency}
-              activeId={activeId}
-              onEdit={startEditItem}
+              onUpdate={updateItem}
+              onAdd={addItem}
               onDuplicate={duplicateItem}
               onDelete={deleteItem}
-              onToggleType={toggleItemType}
               onToggleSelected={toggleOptionalSelected}
             />
           </div>

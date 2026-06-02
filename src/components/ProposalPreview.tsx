@@ -99,10 +99,6 @@ export function ProposalPreview({
               value={formatPreviewDate(data.project.proposalDate)}
             />
             <CoverMetricRow
-              label="Подготовил"
-              value={data.project.preparedBy || "Team"}
-            />
-            <CoverMetricRow
               label="Бюджет"
               value={formatMoney(grandTotal, data.project.currency)}
             />

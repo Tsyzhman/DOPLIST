@@ -1,10 +1,4 @@
-import {
-  CheckCircle2,
-  Copy,
-  Pencil,
-  Trash2,
-  WalletCards,
-} from "@/components/icons";
+import { Check, Copy, Plus, Trash2 } from "@/components/icons";
 import { Button, SectionCard } from "@/components/Ui";
 import type { ReactNode } from "react";
 import {
@@ -12,31 +6,40 @@ import {
   categories,
   categoryLabels,
   formatMoney,
+  fromList,
+  priorities,
   priorityLabels,
+  statuses,
   statusLabels,
+  toList,
   unitLabels,
+  units,
 } from "@/lib/proposal";
-import type { ChangeItem } from "@/lib/types";
+import type {
+  Category,
+  ChangeItem,
+  Priority,
+  Status,
+  Unit,
+} from "@/lib/types";
 
 type ChangeItemListProps = {
   items: ChangeItem[];
   currency: string;
-  activeId?: string | null;
-  onEdit: (item: ChangeItem) => void;
+  onUpdate: (id: string, patch: Partial<ChangeItem>) => void;
+  onAdd: () => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
-  onToggleType: (id: string, type: "required" | "optional") => void;
   onToggleSelected: (id: string, selected: boolean) => void;
 };
 
 export function ChangeItemList({
   items,
   currency,
-  activeId,
-  onEdit,
+  onUpdate,
+  onAdd,
   onDuplicate,
   onDelete,
-  onToggleType,
   onToggleSelected,
 }: ChangeItemListProps) {
   const grouped = categories
@@ -50,14 +53,20 @@ export function ChangeItemList({
     <SectionCard
       title="Корректировки по категориям"
       eyebrow="Список корректировок"
+      action={
+        <Button type="button" variant="secondary" onClick={onAdd}>
+          <Plus size={16} aria-hidden="true" />
+          Добавить
+        </Button>
+      }
     >
-
       {items.length === 0 ? (
         <div className="rounded-md border border-dashed border-zinc-300 p-5 text-sm text-zinc-500">
-          Пока нет корректировок. Добавьте первую позицию через форму выше.
+          Пока нет корректировок. Нажмите «Добавить», чтобы создать первую
+          позицию — её можно править прямо в карточке.
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {grouped.map((group) => (
             <div key={group.category} className="space-y-3">
               <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
@@ -68,17 +77,15 @@ export function ChangeItemList({
                   {group.items.length} поз.
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {group.items.map((item) => (
-                  <ChangeListCard
+                  <ChangeItemEditCard
                     key={item.id}
                     item={item}
                     currency={currency}
-                    isActive={activeId === item.id}
-                    onEdit={() => onEdit(item)}
+                    onUpdate={(patch) => onUpdate(item.id, patch)}
                     onDuplicate={() => onDuplicate(item.id)}
                     onDelete={() => onDelete(item.id)}
-                    onToggleType={(type) => onToggleType(item.id, type)}
                     onToggleSelected={(selected) =>
                       onToggleSelected(item.id, selected)
                     }
@@ -93,183 +100,367 @@ export function ChangeItemList({
   );
 }
 
-function ChangeListCard({
+function ChangeItemEditCard({
   item,
   currency,
-  isActive,
-  onEdit,
+  onUpdate,
   onDuplicate,
   onDelete,
-  onToggleType,
   onToggleSelected,
 }: {
   item: ChangeItem;
   currency: string;
-  isActive: boolean;
-  onEdit: () => void;
+  onUpdate: (patch: Partial<ChangeItem>) => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  onToggleType: (type: "required" | "optional") => void;
   onToggleSelected: (selected: boolean) => void;
 }) {
   const itemTotal = calculateItemTotal(item);
+  const titleError = item.title.trim() ? "" : "Название обязательно.";
+  const priceError = item.price >= 0 ? "" : "Стоимость не может быть меньше 0.";
+  const quantityError =
+    item.quantity >= 1 ? "" : "Количество минимум 1.";
 
   return (
-    <article
-      className={`rounded-lg border p-3 transition ${
-        isActive
-          ? "border-emerald-300 bg-emerald-50/60"
-          : "border-zinc-200 bg-white hover:border-zinc-300"
-      }`}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-base font-semibold text-zinc-950">
-              {item.title || "Без названия"}
-            </h4>
-            <Badge tone={item.required ? "dark" : "light"}>
-              {item.required ? "Обязательная" : "Опция"}
-            </Badge>
-            <Badge tone={item.priority === "high" ? "warning" : "neutral"}>
-              {priorityLabels[item.priority]}
-            </Badge>
-          </div>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600">
-            {item.description || "Описание пока не заполнено."}
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-sm font-semibold text-zinc-950">
-            {formatMoney(itemTotal, currency)}
-          </div>
-          <div className="text-xs text-zinc-500">
-            {item.quantity} x {unitLabels[item.unit]}
-          </div>
-        </div>
+    <article className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <TextInput
+          label="Название"
+          value={item.title}
+          error={titleError}
+          onChange={(title) => onUpdate({ title })}
+        />
+        <SelectInput
+          label="Категория"
+          value={item.category}
+          options={categories}
+          getLabel={(category) => categoryLabels[category as Category]}
+          onChange={(category) =>
+            onUpdate({ category: category as Category })
+          }
+        />
       </div>
 
-      <div className="mt-3 grid gap-2 text-xs text-zinc-500 sm:grid-cols-3">
-        <div className="rounded-md bg-zinc-50 px-2 py-1">
-          Статус: <span className="font-medium text-zinc-700">{statusLabels[item.status]}</span>
-        </div>
-        <div className="rounded-md bg-zinc-50 px-2 py-1">
-          Дни: <span className="font-medium text-zinc-700">{item.estimatedDays}</span>
-        </div>
-        <div className="rounded-md bg-zinc-50 px-2 py-1">
-          Объем:{" "}
-          <span className="font-medium text-zinc-700">
-            {item.deliverables.length} пункт.
-          </span>
-        </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Textarea
+          label="Описание"
+          rows={3}
+          value={item.description}
+          onChange={(description) => onUpdate({ description })}
+        />
+        <Textarea
+          label="Ценность для клиента"
+          rows={3}
+          value={item.clientValue}
+          onChange={(clientValue) => onUpdate({ clientValue })}
+        />
       </div>
 
-      {item.internalNote ? (
-        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-          Внутренне: {item.internalNote}
-        </p>
-      ) : null}
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Textarea
+          label="Что входит"
+          rows={4}
+          helper="Каждый пункт с новой строки."
+          value={fromList(item.deliverables)}
+          onChange={(deliverables) =>
+            onUpdate({ deliverables: toList(deliverables) })
+          }
+        />
+        <Textarea
+          label="Не входит в эту корректировку"
+          rows={4}
+          helper="Каждый пункт с новой строки."
+          value={fromList(item.outOfScope)}
+          onChange={(outOfScope) =>
+            onUpdate({ outOfScope: toList(outOfScope) })
+          }
+        />
+      </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="grid h-9 grid-cols-2 rounded-md border border-zinc-200 bg-zinc-50 p-1">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <NumberInput
+          label="Стоимость"
+          value={item.price}
+          min={0}
+          error={priceError}
+          onChange={(price) => onUpdate({ price })}
+        />
+        <NumberInput
+          label="Количество"
+          value={item.quantity}
+          min={1}
+          error={quantityError}
+          onChange={(quantity) => onUpdate({ quantity })}
+        />
+        <SelectInput
+          label="Единица"
+          value={item.unit}
+          options={units}
+          getLabel={(unit) => unitLabels[unit as Unit]}
+          onChange={(unit) => onUpdate({ unit: unit as Unit })}
+        />
+        <NumberInput
+          label="Оценка, дней"
+          value={item.estimatedDays}
+          min={0}
+          step={0.5}
+          onChange={(estimatedDays) => onUpdate({ estimatedDays })}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <SelectInput
+          label="Приоритет"
+          value={item.priority}
+          options={priorities}
+          getLabel={(priority) => priorityLabels[priority as Priority]}
+          onChange={(priority) =>
+            onUpdate({ priority: priority as Priority })
+          }
+        />
+        <SelectInput
+          label="Статус"
+          value={item.status}
+          options={statuses}
+          getLabel={(status) => statusLabels[status as Status]}
+          onChange={(status) => onUpdate({ status: status as Status })}
+        />
+        <div>
+          <span className="text-sm font-medium text-zinc-700">Тип</span>
+          <div className="mt-1 grid h-10 grid-cols-2 rounded-md border border-zinc-200 bg-zinc-50 p-1">
             <button
               type="button"
-              onClick={() => onToggleType("required")}
-              className={`rounded px-2 text-xs font-semibold transition ${
+              onClick={() =>
+                onUpdate({ required: true, optional: false, selected: true })
+              }
+              className={`inline-flex items-center justify-center gap-1 rounded px-2 text-sm font-medium transition ${
                 item.required
                   ? "bg-paper text-zinc-950 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
+              {item.required ? <Check size={14} aria-hidden="true" /> : null}
               Обязательная
             </button>
             <button
               type="button"
-              onClick={() => onToggleType("optional")}
-              className={`rounded px-2 text-xs font-semibold transition ${
+              onClick={() =>
+                onUpdate({
+                  required: false,
+                  optional: true,
+                  selected: item.selected,
+                })
+              }
+              className={`inline-flex items-center justify-center gap-1 rounded px-2 text-sm font-medium transition ${
                 item.optional
                   ? "bg-paper text-zinc-950 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
+              {item.optional ? <Check size={14} aria-hidden="true" /> : null}
               Опция
             </button>
           </div>
-          <label className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700">
-            <input
-              type="checkbox"
-              checked={item.optional ? item.selected : true}
-              disabled={!item.optional}
-              onChange={(event) => onToggleSelected(event.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-500"
-            />
-            Выбрана
-          </label>
         </div>
+      </div>
 
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <label className="flex min-h-10 items-center gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
+          <input
+            type="checkbox"
+            checked={item.optional ? item.selected : true}
+            disabled={!item.optional}
+            onChange={(event) => onToggleSelected(event.target.checked)}
+            className="h-4 w-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-500"
+          />
+          Выбрана, если это опция
+        </label>
+        <TextInput
+          label="Зависимости"
+          value={item.dependencyNote}
+          onChange={(dependencyNote) => onUpdate({ dependencyNote })}
+        />
+      </div>
+
+      <div className="mt-4">
+        <Textarea
+          label="Внутренняя заметка"
+          rows={3}
+          helper="Показывается только в режиме редактирования."
+          value={item.internalNote}
+          onChange={(internalNote) => onUpdate({ internalNote })}
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 pt-3">
+        <div className="text-sm text-zinc-500">
+          Итог по позиции:{" "}
+          <span className="font-semibold text-zinc-900">
+            {formatMoney(itemTotal, currency)}
+          </span>
+          <span className="mx-2 text-zinc-300">·</span>
+          {item.estimatedDays} дн.
+          <span className="mx-2 text-zinc-300">·</span>
+          {statusLabels[item.status]}
+        </div>
         <div className="flex items-center gap-1">
-          <IconButton label="Редактировать" onClick={onEdit}>
-            <Pencil size={15} aria-hidden="true" />
-          </IconButton>
-          <IconButton label="Дублировать" onClick={onDuplicate}>
+          <Button
+            type="button"
+            variant="ghost"
+            title="Дублировать"
+            aria-label="Дублировать"
+            onClick={onDuplicate}
+            className="h-9 w-9 px-0"
+          >
             <Copy size={15} aria-hidden="true" />
-          </IconButton>
-          <IconButton label="Удалить" onClick={onDelete} danger>
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            title="Удалить"
+            aria-label="Удалить"
+            onClick={onDelete}
+            className="h-9 w-9 px-0"
+          >
             <Trash2 size={15} aria-hidden="true" />
-          </IconButton>
+          </Button>
         </div>
       </div>
     </article>
   );
 }
 
-function IconButton({
+function TextInput({
   label,
-  children,
-  onClick,
-  danger = false,
+  value,
+  onChange,
+  error,
 }: {
   label: string;
-  children: ReactNode;
-  onClick: () => void;
-  danger?: boolean;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
 }) {
   return (
-    <Button
-      type="button"
-      variant={danger ? "danger" : "ghost"}
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      className="h-9 w-9 px-0"
-    >
-      {children}
-    </Button>
+    <label className="block">
+      <span className="text-sm font-medium text-zinc-700">{label}</span>
+      <input
+        aria-label={label}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`mt-1 h-10 w-full rounded-md border bg-white px-3 text-sm text-zinc-950 outline-none transition focus:ring-4 ${
+          error
+            ? "border-rose-300 focus:border-rose-500 focus:ring-rose-100"
+            : "border-zinc-200 focus:border-emerald-500 focus:ring-emerald-100"
+        }`}
+      />
+      {error ? (
+        <span className="mt-1 block text-xs text-rose-600">{error}</span>
+      ) : null}
+    </label>
   );
 }
 
-function Badge({
-  children,
-  tone,
+function NumberInput({
+  label,
+  value,
+  min,
+  step = 1,
+  error,
+  onChange,
 }: {
-  children: ReactNode;
-  tone: "dark" | "light" | "warning" | "neutral";
+  label: string;
+  value: number;
+  min: number;
+  step?: number;
+  error?: string;
+  onChange: (value: number) => void;
 }) {
-  const tones = {
-    dark: "bg-zinc-950 text-white",
-    light: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
-    warning: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
-    neutral: "bg-zinc-100 text-zinc-700",
-  };
-
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${tones[tone]}`}
-    >
-      {tone === "dark" ? <CheckCircle2 size={12} aria-hidden="true" /> : null}
-      {tone === "light" ? <WalletCards size={12} aria-hidden="true" /> : null}
-      {children}
-    </span>
+    <label className="block">
+      <span className="text-sm font-medium text-zinc-700">{label}</span>
+      <input
+        aria-label={label}
+        type="number"
+        min={min}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className={`mt-1 h-10 w-full rounded-md border bg-white px-3 text-sm text-zinc-950 outline-none transition focus:ring-4 ${
+          error
+            ? "border-rose-300 focus:border-rose-500 focus:ring-rose-100"
+            : "border-zinc-200 focus:border-emerald-500 focus:ring-emerald-100"
+        }`}
+      />
+      {error ? (
+        <span className="mt-1 block text-xs text-rose-600">{error}</span>
+      ) : null}
+    </label>
   );
 }
+
+function SelectInput({
+  label,
+  value,
+  options,
+  getLabel,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  getLabel?: (value: string) => string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-zinc-700">{label}</span>
+      <select
+        aria-label={label}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {getLabel ? getLabel(option) : option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function Textarea({
+  label,
+  value,
+  onChange,
+  rows,
+  helper,
+}: {
+  label: string;
+  value: string;
+  rows: number;
+  helper?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-zinc-700">{label}</span>
+      <textarea
+        aria-label={label}
+        value={value}
+        rows={rows}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 text-zinc-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+      />
+      {helper ? (
+        <span className="mt-1 block text-xs text-zinc-500">{helper}</span>
+      ) : null}
+    </label>
+  );
+}
+
+// Re-export ReactNode just to keep callers from breaking if anyone
+// imports the previous named exports.
+export type { ReactNode };
