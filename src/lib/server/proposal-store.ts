@@ -9,7 +9,7 @@ import fs from "fs/promises";
 import path from "path";
 import {
   buildPublicProposalUrl,
-  createDemoProposalData,
+  createDefaultProposalData,
   normalizeProposalData,
   toList,
 } from "@/lib/proposal";
@@ -293,7 +293,7 @@ export function proposalToProposalData(proposal: PublicProposal): ProposalData {
     readArray<StoredDeliverable>(proposal, "deliverables"),
   );
   const selectedPackageId = readString(proposal, "selectedPackageId");
-  const base = createDemoProposalData();
+  const base = createDefaultProposalData();
   const items: ChangeItem[] = packages.length
     ? packages.map((item, index) => {
         const selected = selectedPackageId
@@ -788,7 +788,7 @@ function toSupabaseProposal(proposal: StoredProposal) {
 }
 
 function stripInternalProposalData(data: ProposalData): ProposalData {
-  const normalized = normalizeProposalData(data) || createDemoProposalData();
+  const normalized = normalizeProposalData(data) || createDefaultProposalData();
 
   return {
     project: {

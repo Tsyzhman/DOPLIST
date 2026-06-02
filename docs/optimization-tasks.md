@@ -1,6 +1,6 @@
 # Optimization tasks (resource footprint)
 
-Goal: уменьшить требования DOPLIST к CPU, RAM и (особенно) диску — как в Docker-образе, так и в локальной dev-среде.
+Goal: уменьшить требования SCOPELIST к CPU, RAM и (особенно) диску — как в Docker-образе, так и в локальной dev-среде.
 
 Документ написан как чек-лист для агентов/разработчиков. Каждая задача самодостаточна: что менять, в каких файлах, какие команды запускать, как проверить результат, и какие риски учесть.
 
@@ -132,7 +132,7 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
        target: runner
        args:
          NODE_IMAGE: node:24.16.0-alpine3.23
-     image: price-presentation-web:latest
+     image: scopelist-web:latest
      # ...
    archive-worker:
      build:
@@ -141,11 +141,11 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
        target: worker
        args:
          NODE_IMAGE: node:24.16.0-alpine3.23
-     image: price-presentation-archive-worker:latest
+     image: scopelist-archive-worker:latest
      command: ["node", "scripts/proposal-archive-worker.mjs"]
      # ...
    ```
-   Сейчас оба сервиса указывают один `image: price-presentation:latest` — это надо развести (см. выше).
+   Сейчас оба сервиса указывают один `image: scopelist:latest` — это надо развести (см. выше).
 
 3. Если после билда Next жалуется, что не трассирует что-то из `src/lib/server/public-access.ts` (использует `node:crypto`) — добавить в `next.config.ts`:
    ```ts
@@ -158,8 +158,8 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
    Это уже есть по умолчанию в Next 16, но явное указание не помешает.
 
 **Acceptance:**
-- `docker images` показывает образ `price-presentation-web` < 250 МБ (после очистки `npm ci` кеша и dev-deps должно быть ~150–200 МБ).
-- `docker run --rm price-presentation-web:latest node -e "console.log('ok')"` запускается.
+- `docker images` показывает образ `scopelist-web` < 250 МБ (после очистки `npm ci` кеша и dev-deps должно быть ~150–200 МБ).
+- `docker run --rm scopelist-web:latest node -e "console.log('ok')"` запускается.
 - `curl http://localhost:3004` отдаёт страницу.
 - Воркер запускается отдельно: `docker compose run --rm archive-worker node scripts/proposal-archive-worker.mjs --self-test` отдаёт OK.
 
@@ -172,7 +172,7 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
   ```
 - Воркер использует `@supabase/supabase-js` — его кладёт `prod-deps`, не Next. Проверить, что `node_modules/@supabase` присутствует в worker-образе:
   ```bash
-  docker run --rm --entrypoint sh price-presentation-archive-worker:latest -c "ls node_modules/@supabase"
+  docker run --rm --entrypoint sh scopelist-archive-worker:latest -c "ls node_modules/@supabase"
   ```
 
 ---
@@ -331,7 +331,7 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
    });
 
    export const metadata: Metadata = {
-     title: "DOPLIST",
+     title: "SCOPELIST",
      description: "Digital Offer & Proposal List for Interactive Scope Tracking",
    };
 
@@ -420,7 +420,7 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
 - `README.md` обновлён в части Resource profile (см. AGENTS.md правило про синхронизацию).
 
 **Риски:**
-- Если host-cron не отрабатывает (cron-демон выключен, сервер перезагружен), архивация не пройдёт молча. Митигация: ENV-флаг алерта в Telegram, который шлёт пинг каждый запуск. Или systemd timer вместо cron — надёжнее (см. `man systemd.timer`).
+- Если host-cron не отрабатывает (cron-служба выключена, сервер перезагружен), архивация не пройдёт молча. Митигация: ENV-флаг алерта в Telegram, который шлёт пинг каждый запуск. Или systemd timer вместо cron — надёжнее (см. `man systemd.timer`).
 - Воркер теряет автоматический рестарт при крэше. Текущая реализация (`while (true) { try ... }`) уже идемпотентна, но при OOM скрипт умрёт — host-cron подхватит на следующий день. Если это критично, использовать вариант B (см. T6b ниже).
 
 ### T6b (опциональный fallback). Объединение в один Node-процесс через `instrumentation.ts`
@@ -482,7 +482,7 @@ Goal: уменьшить требования DOPLIST к CPU, RAM и (особе
 
 **Acceptance:** runtime-образ не содержит `node_modules/typescript`, `node_modules/eslint`, `node_modules/@tailwindcss`. Проверка:
 ```bash
-docker run --rm --entrypoint sh price-presentation:latest -c "ls node_modules | grep -E 'typescript|eslint|tailwind' || echo OK"
+docker run --rm --entrypoint sh scopelist:latest -c "ls node_modules | grep -E 'typescript|eslint|tailwind' || echo OK"
 ```
 Должно быть `OK`.
 
@@ -601,13 +601,13 @@ docker run --rm --entrypoint sh price-presentation:latest -c "ls node_modules | 
    ## Resource limits
 
    Контейнеры намеренно ограничены, чтобы безопасно сосуществовать на
-   shared-сервере. Если приложение будет получать реальный трафик,
-   а не демо-нагрузку, поднять `mem_limit` web до 1g и убрать
+   shared-сервере. Если приложение будет получать высокий production-трафик,
+   поднять `mem_limit` web до 1g и убрать
    `NODE_OPTIONS=--max-old-space-size`.
    ```
 
 **Acceptance:**
-- `docker stats price-presentation-web` показывает MEM USAGE / LIMIT с указанным потолком.
+- `docker stats scopelist-web` показывает MEM USAGE / LIMIT с указанным потолком.
 - Под нагрузкой `ab -n 200 -c 5 http://localhost:3004/` контейнер не OOM-ит (если OOM-ит — поднять лимит).
 
 **Риски:** при росте функциональности (импорт больших JSON, серверные роуты с расчётами) лимит 512M может стать тесным. Митигация — мониторинг и поднятие лимита по факту.
@@ -631,10 +631,10 @@ docker run --rm --entrypoint sh price-presentation:latest -c "ls node_modules | 
 
 2. Шаги рефакторинга (последовательно, по одному компоненту за раз, каждый — отдельный коммит):
    - Убрать `"use client"` из чистых компонентов.
-   - Перенести состояние и эффекты в один root client-компонент (`<AppShellClient>`), а server-обёртка `<AppShell>` рендерит initial state (демо-данные) и встраивает client-айленды для интерактивных частей.
+   - Перенести состояние и эффекты в один root client-компонент (`<AppShellClient>`), а server-обёртка `<AppShell>` рендерит initial state и встраивает client-айленды для интерактивных частей.
    - Для каждого client-компонента — обернуть в `dynamic(() => import(...), { ssr: false })` только если он реально SSR-несовместим (например, использует `window` на верхнем уровне). Иначе оставить обычный импорт.
 
-3. Перенести `createDemoProposalData()` вызов из `useState(() => createDemoProposalData())` на server-side render — `AppShell` будет server component и пробрасывать `initialData` в `<AppShellClient initialData={...}>`. Это убирает дорогостоящий вычисляемый initial state с клиента (8 demo items с длинными русскими строками).
+3. Перенести `createDefaultProposalData()` вызов из `useState(() => createDefaultProposalData())` на server-side render — `AppShell` будет server component и пробрасывать `initialData` в `<AppShellClient initialData={...}>`. Это убирает дорогостоящий вычисляемый initial state с клиента.
 
 4. Прогнать `npm run build` и сравнить `First Load JS` в выводе:
    ```
@@ -651,7 +651,7 @@ docker run --rm --entrypoint sh price-presentation:latest -c "ls node_modules | 
 
 **Риски (большие, в отличие от остальных задач):**
 - Состояние сейчас живёт в одном клиентском `AppShell` с `localStorage`. Разрезание требует аккуратной работы с border'ом server↔client.
-- Hydration mismatch — если server рендерит demo-данные, а client при mount подгружает из localStorage, на первом рендере будет flicker. Митигировать через `suppressHydrationWarning` на корне или явно пометить, что initial render — это demo (до первого `useEffect`).
+- Hydration mismatch — если server рендерит initial state, а client при mount подгружает из localStorage, на первом рендере будет flicker. Митигировать через `suppressHydrationWarning` на корне или явно пометить, что initial render временный до первого `useEffect`.
 - Это самый трудоёмкий из всех пунктов (1–2 дня вдумчивой работы). Делать **последним**, и только если есть запрос на уменьшение client JS / улучшение Lighthouse-скоров. Для серверных требований (CPU/RAM/диск) эффект минимальный — основной выигрыш на стороне клиента.
 
 ---
@@ -660,14 +660,14 @@ docker run --rm --entrypoint sh price-presentation:latest -c "ls node_modules | 
 
 1. Размер runtime-образа:
    ```bash
-   docker images price-presentation-web:latest --format "{{.Size}}"
-   docker images price-presentation-archive-worker:latest --format "{{.Size}}"
+   docker images scopelist-web:latest --format "{{.Size}}"
+   docker images scopelist-archive-worker:latest --format "{{.Size}}"
    ```
    Целевые цифры: web < 250 МБ (сейчас ~500–700 МБ при наличии dev-deps), worker < 200 МБ.
 
 2. RSS работающих контейнеров:
    ```bash
-   docker stats --no-stream price-presentation-web
+   docker stats --no-stream scopelist-web
    ```
    Цель: < 400 МБ в idle.
 
@@ -696,6 +696,6 @@ docker run --rm --entrypoint sh price-presentation:latest -c "ls node_modules | 
 - [x] T7 — учтено внутри T2.
 - [x] T8 — `.gitignore` расширен, `npm run clean` работает.
 - [x] T9 — `mem_limit` и `cpus` выставлены, README дополнен.
-- [x] T10 — часть `AppShell` перенесена в server-render, initial demo data создаётся на сервере.
+- [x] T10 — часть `AppShell` перенесена в server-render, initial state создаётся на сервере.
 
 После завершения каждой задачи — обновить раздел **Resource profile** в `README.md` согласно правилу в `AGENTS.md`.

@@ -1,6 +1,6 @@
 # Server sharing with Caddy
 
-DOPLIST public client links use private slugs:
+SCOPELIST public client links use private slugs:
 
 ```text
 https://domain.ru/p/<shareSlug>

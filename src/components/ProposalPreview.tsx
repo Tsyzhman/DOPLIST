@@ -64,7 +64,7 @@ export function ProposalPreview({
           <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-zinc-600">
             <span className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-3 py-1.5 text-white">
               <BadgeCheck size={16} aria-hidden="true" />
-              DOPLIST
+              SCOPELIST
             </span>
             <span>{data.project.version}</span>
             <span className="h-1 w-1 rounded-full bg-zinc-300" />

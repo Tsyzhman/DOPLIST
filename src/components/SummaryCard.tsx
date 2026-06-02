@@ -1,4 +1,5 @@
 import { CalendarClock, CircleDollarSign, Layers3 } from "@/components/icons";
+import { SectionCard } from "@/components/Ui";
 import type { ReactNode } from "react";
 import {
   calculateGrandTotal,
@@ -25,46 +26,40 @@ export function SummaryCard({ data, compact = false }: SummaryCardProps) {
   ).length;
 
   return (
-    <aside
-      className={`builder-summary rounded-lg border border-zinc-200 bg-white/95 p-4 shadow-sm shadow-zinc-200/60 backdrop-blur ${
-        compact ? "" : "sticky top-24 z-20"
-      }`}
+    <div
+      className={`builder-summary ${compact ? "" : "sticky top-24 z-20"}`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Сводка proposal
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-zinc-950">
-            {formatMoney(grandTotal, data.project.currency)}
-          </h2>
+      <SectionCard
+        title={formatMoney(grandTotal, data.project.currency)}
+        eyebrow="Сводка proposal"
+        action={
+          <div className="rounded-md bg-zinc-100 p-2 text-zinc-700">
+            <CircleDollarSign size={20} aria-hidden="true" />
+          </div>
+        }
+      >
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+          <SummaryMetric
+            icon={<Layers3 size={16} aria-hidden="true" />}
+            label="Обязательные"
+            value={formatMoney(requiredSubtotal, data.project.currency)}
+            detail={`${requiredCount} поз.`}
+          />
+          <SummaryMetric
+            icon={<CircleDollarSign size={16} aria-hidden="true" />}
+            label="Выбранные опции"
+            value={formatMoney(optionalSubtotal, data.project.currency)}
+            detail={`${selectedOptionalCount} опц.`}
+          />
+          <SummaryMetric
+            icon={<CalendarClock size={16} aria-hidden="true" />}
+            label="Сроки"
+            value={`${totalDays} дн.`}
+            detail="выбранный объем"
+          />
         </div>
-        <div className="rounded-md bg-emerald-50 p-2 text-emerald-700">
-          <CircleDollarSign size={20} aria-hidden="true" />
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-        <SummaryMetric
-          icon={<Layers3 size={16} aria-hidden="true" />}
-          label="Обязательные"
-          value={formatMoney(requiredSubtotal, data.project.currency)}
-          detail={`${requiredCount} поз.`}
-        />
-        <SummaryMetric
-          icon={<CircleDollarSign size={16} aria-hidden="true" />}
-          label="Выбранные опции"
-          value={formatMoney(optionalSubtotal, data.project.currency)}
-          detail={`${selectedOptionalCount} опц.`}
-        />
-        <SummaryMetric
-          icon={<CalendarClock size={16} aria-hidden="true" />}
-          label="Сроки"
-          value={`${totalDays} дн.`}
-          detail="выбранный объем"
-        />
-      </div>
-    </aside>
+      </SectionCard>
+    </div>
   );
 }
 

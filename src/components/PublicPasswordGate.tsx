@@ -64,7 +64,7 @@ export function PublicPasswordGate({ shareSlug, title }: PublicPasswordGateProps
 
   return (
     <div
-      className={`doplist-theme doplist-theme-${theme} relative flex min-h-screen items-center justify-center bg-zinc-100 px-4 py-10 text-zinc-950`}
+      className={`scopelist-theme scopelist-theme-${theme} relative flex min-h-screen items-center justify-center bg-zinc-100 px-4 py-10 text-zinc-950`}
     >
       <div className="no-print absolute right-4 top-4">
         <ThemeToggle theme={theme} onChange={setTheme} />

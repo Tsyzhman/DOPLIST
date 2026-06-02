@@ -7,11 +7,11 @@ type AccessControlledProposal = {
 };
 
 export function getProposalAccessCookieName(shareSlug: string) {
-  return `doplist_access_${shareSlug}`;
+  return `scopelist_access_${shareSlug}`;
 }
 
 export function createProposalAccessToken(proposal: AccessControlledProposal) {
-  const secret = process.env.PROPOSAL_ACCESS_SECRET || "doplist-dev-secret";
+  const secret = process.env.PROPOSAL_ACCESS_SECRET || "scopelist-dev-secret";
   const hashBasis = proposal.passwordHash || "no-password";
 
   return createHmac("sha256", secret)

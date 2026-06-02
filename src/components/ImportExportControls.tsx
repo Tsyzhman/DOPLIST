@@ -1,7 +1,8 @@
-import { Download, FileUp, Link2, RotateCcw, Sparkles } from "@/components/icons";
+import { Download, FileUp, Sparkles } from "@/components/icons";
+import { Button } from "@/components/Ui";
 import { useRef } from "react";
 import {
-  createDoplistAiInputExampleData,
+  createScopeListAiInputExampleData,
   exportProposalDataForJson,
 } from "@/lib/proposal";
 import type { ProposalData } from "@/lib/types";
@@ -9,8 +10,6 @@ import type { ProposalData } from "@/lib/types";
 type ImportExportControlsProps = {
   data: ProposalData;
   onImport: (data: unknown) => void;
-  onCopyShareLink: () => void;
-  onReset: () => void;
 };
 
 function downloadJson(payload: unknown, filename: string) {
@@ -28,8 +27,6 @@ function downloadJson(payload: unknown, filename: string) {
 export function ImportExportControls({
   data,
   onImport,
-  onCopyShareLink,
-  onReset,
 }: ImportExportControlsProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -38,13 +35,13 @@ export function ImportExportControls({
       data.project.projectTitle
         .toLowerCase()
         .replace(/[^a-zа-я0-9]+/gi, "-")
-        .replace(/^-|-$/g, "") || "change-proposal";
+        .replace(/^-|-$/g, "") || "scopelist";
 
     downloadJson(exportProposalDataForJson(data), `${safeTitle}.json`);
   }
 
   function downloadExample() {
-    downloadJson(createDoplistAiInputExampleData(), "doplist-example.json");
+    downloadJson(createScopeListAiInputExampleData(), "scopelist-example.json");
   }
 
   async function importJson(file: File | undefined) {
@@ -63,31 +60,23 @@ export function ImportExportControls({
 
   return (
     <div className="top-controls flex flex-wrap items-center gap-2">
-      <button
+      <Button
         type="button"
-        onClick={exportJson}
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
-      >
-        <Download size={16} aria-hidden="true" />
-        Экспорт JSON
-      </button>
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
-      >
-        <FileUp size={16} aria-hidden="true" />
-        Импорт JSON
-      </button>
-      <button
-        type="button"
+        variant="secondary"
         onClick={downloadExample}
         title="Скачать пример структуры, чтобы заполнить с помощью AI"
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 shadow-sm transition hover:bg-emerald-100"
       >
         <Sparkles size={16} aria-hidden="true" />
-        Пример JSON для AI
-      </button>
+        Пример JSON
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => inputRef.current?.click()}
+      >
+        <FileUp size={16} aria-hidden="true" />
+        Импорт
+      </Button>
       <input
         ref={inputRef}
         type="file"
@@ -95,26 +84,16 @@ export function ImportExportControls({
         className="hidden"
         onChange={(event) => {
           importJson(event.target.files?.[0]).catch(() => {
-            alert("Не удалось импортировать JSON. Проверьте структуру файла.");
+            alert(
+              "Не удалось импортировать JSON. Проверьте структуру файла.",
+            );
           });
         }}
       />
-      <button
-        type="button"
-        onClick={onCopyShareLink}
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 shadow-sm transition hover:bg-emerald-100"
-      >
-        <Link2 size={16} aria-hidden="true" />
-        Опубликовать ссылку
-      </button>
-      <button
-        type="button"
-        onClick={onReset}
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 text-sm font-medium text-rose-800 transition hover:bg-rose-100"
-      >
-        <RotateCcw size={16} aria-hidden="true" />
-        Сбросить демо
-      </button>
+      <Button type="button" variant="ghost" onClick={exportJson}>
+        <Download size={16} aria-hidden="true" />
+        Экспорт JSON
+      </Button>
     </div>
   );
 }

@@ -233,7 +233,24 @@ export type ProposalData = {
   items: ChangeItem[];
 };
 
-export type DoplistJsonProject = Omit<
+export type ScopeListStatus = "draft" | "published";
+
+export type ScopeListIndexEntry = {
+  id: string;
+  title: string;
+  clientName: string;
+  version: string;
+  proposalDate: string;
+  createdAt: string;
+  updatedAt: string;
+  status: ScopeListStatus;
+  total: number;
+  itemCount: number;
+  publicUrl?: string;
+  recordId?: string;
+};
+
+export type ScopeListJsonProject = Omit<
   ProjectSettings,
   "assumptions" | "outOfScope"
 > & {
@@ -241,7 +258,7 @@ export type DoplistJsonProject = Omit<
   outOfScope: string[];
 };
 
-export type DoplistJsonPricing = {
+export type ScopeListJsonPricing = {
   quantity: number;
   unit: Unit;
   price: number;
@@ -250,22 +267,22 @@ export type DoplistJsonPricing = {
   confidence?: EstimateConfidence | null;
 };
 
-export type DoplistJsonTimeline = {
+export type ScopeListJsonTimeline = {
   estimatedDays: number;
   source?: EstimateSource | null;
   confidence?: EstimateConfidence | null;
 };
 
-export type DoplistJsonSelection = {
+export type ScopeListJsonSelection = {
   selected: boolean;
 };
 
-export type DoplistJsonNotes = {
+export type ScopeListJsonNotes = {
   dependencyNote: string | null;
   internalNote: string | null;
 };
 
-export type DoplistJsonItem = {
+export type ScopeListJsonItem = {
   id?: string;
   title: string;
   category: Category;
@@ -276,22 +293,22 @@ export type DoplistJsonItem = {
   clientValue: string;
   deliverables: string[];
   outOfScope: string[];
-  pricing: DoplistJsonPricing;
-  timeline: DoplistJsonTimeline;
-  selection: DoplistJsonSelection;
-  notes: DoplistJsonNotes;
+  pricing: ScopeListJsonPricing;
+  timeline: ScopeListJsonTimeline;
+  selection: ScopeListJsonSelection;
+  notes: ScopeListJsonNotes;
 };
 
-export type DoplistProposalJson = {
-  project: DoplistJsonProject;
-  items: DoplistJsonItem[];
+export type ScopeListProposalJson = {
+  project: ScopeListJsonProject;
+  items: ScopeListJsonItem[];
 };
 
-export type DoplistAiInputItem = Omit<DoplistJsonItem, "id">;
+export type ScopeListAiInputItem = Omit<ScopeListJsonItem, "id">;
 
-export type DoplistAiInputData = {
-  project: DoplistJsonProject;
-  items: DoplistAiInputItem[];
+export type ScopeListAiInputData = {
+  project: ScopeListJsonProject;
+  items: ScopeListAiInputItem[];
 };
 
 export type ProposalMode = "builder" | "preview";

@@ -43,7 +43,7 @@ export default async function PublicPasswordPage({
   return (
     <PublicPasswordGate
       shareSlug={shareSlug}
-      title={proposal.title || "DOPLIST"}
+      title={proposal.title || "SCOPELIST"}
     />
   );
 }

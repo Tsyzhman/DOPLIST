@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* =============================================================
-   ISTY DESIGN SYSTEM — shared between PRISMA and DOPLIST.
+   ISTY DESIGN SYSTEM — shared between PRISMA and SCOPELIST.
    Light = sales.isty.ist (iceberg block), Dark = isty.ist.
    Switching via `data-theme="light|dark"` on <html>.
    ============================================================= */
@@ -337,9 +337,9 @@ details > summary::-webkit-details-marker {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* ---------- DOPLIST compat: legacy .doplist-theme-* classes
+/* ---------- SCOPELIST compat: legacy .scopelist-theme-* classes
    delegate to data-theme infrastructure ---------- */
-.doplist-theme {
+.scopelist-theme {
   transition:
     background-color 200ms ease,
     color 200ms ease;

@@ -1,9 +1,9 @@
 <!-- BEGIN:project-identity-note -->
 # Project identity note
 
-This folder is the DOPLIST project, not PRISMA/OFFERIST.
+This folder is the SCOPELIST project, not PRISMA/OFFERIST.
 
-There was a temporary folder/repository mix-up on May 31, 2026. The DOPLIST git repository is restored here and this folder is in the expected state again. If a task is about PRISMA/OFFERIST, use `C:\Users\Nik\Documents\kp-builder` instead.
+There was a temporary folder/repository mix-up on May 31, 2026. The SCOPELIST git repository is restored here and this folder is in the expected state again. If a task is about PRISMA/OFFERIST, use `C:\Users\Nik\Documents\kp-builder` instead.
 <!-- END:project-identity-note -->
 
 <!-- BEGIN:nextjs-agent-rules -->

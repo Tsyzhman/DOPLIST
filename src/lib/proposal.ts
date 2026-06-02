@@ -6,20 +6,26 @@ import type {
   Category,
   ChangeItem,
   ChangeItemType,
-  DoplistAiInputData,
-  DoplistJsonItem,
-  DoplistProposalJson,
+  ScopeListAiInputData,
+  ScopeListJsonItem,
+  ScopeListProposalJson,
   EstimateConfidence,
   EstimateSource,
   Priority,
   ProposalData,
+  ScopeListIndexEntry,
   Status,
   Unit,
 } from "./types";
 
-export const STORAGE_KEY = "change-proposal-builder-v1";
-export const PROPOSAL_RECORD_ID_KEY = "change-proposal-record-id-v1";
+export const SCOPELIST_INDEX_KEY = "scopelist-index-v1";
 export const SHARE_HASH_PREFIX = "proposal=";
+
+export function getScopeListDataStorageKey(listId: string) {
+  const safeId = listId.trim() || "new";
+
+  return `scopelist-list-${safeId}-v1`;
+}
 
 export const categories: Category[] = [
   "Design",
@@ -79,15 +85,15 @@ export const unitLabels: Record<Unit, string> = {
   item: "Позиция",
 };
 
-export const doplistProposalJsonSchema = createDoplistJsonSchema({
+export const scopeListProposalJsonSchema = createScopeListJsonSchema({
   includeSystemId: true,
 });
 
-export const doplistAiInputJsonSchema = createDoplistJsonSchema({
+export const scopeListAiInputJsonSchema = createScopeListJsonSchema({
   includeSystemId: false,
 });
 
-function createDoplistJsonSchema({
+function createScopeListJsonSchema({
   includeSystemId,
 }: {
   includeSystemId: boolean;
@@ -107,8 +113,8 @@ function createDoplistJsonSchema({
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",
     title: includeSystemId
-      ? "DOPLIST proposal JSON"
-      : "DOPLIST AI input JSON",
+      ? "SCOPELIST proposal JSON"
+      : "SCOPELIST AI input JSON",
     type: "object",
     additionalProperties: false,
     required: ["project", "items"],
@@ -155,13 +161,13 @@ function createDoplistJsonSchema({
       },
       items: {
         type: "array",
-        items: createDoplistItemJsonSchema(includeSystemId, noteProperty, estimateMeta),
+        items: createScopeListItemJsonSchema(includeSystemId, noteProperty, estimateMeta),
       },
     },
   } as const;
 }
 
-function createDoplistItemJsonSchema(
+function createScopeListItemJsonSchema(
   includeSystemId: boolean,
   noteProperty: Record<string, unknown>,
   estimateMeta: Record<string, unknown>,
@@ -272,6 +278,31 @@ export function calculateGrandTotal(items: ChangeItem[]) {
   return calculateRequiredSubtotal(items) + calculateOptionalSubtotal(items);
 }
 
+export function createScopeListIndexEntry(
+  id: string,
+  data: ProposalData,
+  patch: Partial<ScopeListIndexEntry> = {},
+): ScopeListIndexEntry {
+  const now = new Date().toISOString();
+  const publicUrl = patch.publicUrl || "";
+  const recordId = patch.recordId || "";
+
+  return {
+    id,
+    title: data.project.projectTitle || "Новый scope-лист",
+    clientName: data.project.clientName,
+    version: data.project.version || "v1.0",
+    proposalDate: data.project.proposalDate,
+    createdAt: patch.createdAt || now,
+    updatedAt: patch.updatedAt || now,
+    status: patch.status || (publicUrl ? "published" : "draft"),
+    total: calculateGrandTotal(data.items),
+    itemCount: data.items.length,
+    ...(publicUrl ? { publicUrl } : {}),
+    ...(recordId ? { recordId } : {}),
+  };
+}
+
 export function calculateTotalDays(items: ChangeItem[]) {
   return items
     .filter((item) => item.required || (item.optional && item.selected))
@@ -320,12 +351,33 @@ export function createEmptyChangeItem(): ChangeItem {
   };
 }
 
-export function createDemoProposalData(): ProposalData {
+export function createDefaultProposalData(): ProposalData {
+  return {
+    project: {
+      projectTitle: "Новый scope-лист",
+      clientName: "",
+      preparedBy: "",
+      proposalDate: new Date().toISOString().slice(0, 10),
+      version: "v1.0",
+      currency: "RUB",
+      introSummary: "",
+      paymentTerms: "",
+      approvalUrl: "",
+      discussionUrl: "",
+      assumptions: "",
+      outOfScope: "",
+      notes: "",
+    },
+    items: [],
+  };
+}
+
+export function createExampleProposalData(): ProposalData {
   return {
     project: {
       projectTitle: "Корректировки сайта после клиентского ревью",
-      clientName: "ACME Studio",
-      preparedBy: "Nikita",
+      clientName: "Клиент",
+      preparedBy: "Команда проекта",
       proposalDate: new Date().toISOString().slice(0, 10),
       version: "v1.0",
       currency: "RUB",
@@ -343,8 +395,8 @@ export function createDemoProposalData(): ProposalData {
         "Внутренняя заметка: при согласовании срочной итерации заранее забронировать слот разработки и QA.",
     },
     items: [
-      makeDemoItem({
-        id: "demo-hero",
+      makeExampleItem({
+        id: "example-hero",
         title: "Правка главного экрана",
         category: "Design",
         description:
@@ -366,8 +418,8 @@ export function createDemoProposalData(): ProposalData {
         dependencyNote: "Нужны финальные формулировки CTA от клиента.",
         internalNote: "Проверить, не ломает ли новая композиция mobile hero.",
       }),
-      makeDemoItem({
-        id: "demo-tablet",
+      makeExampleItem({
+        id: "example-tablet",
         title: "Дополнительный адаптив для планшета",
         category: "Development",
         description:
@@ -387,8 +439,8 @@ export function createDemoProposalData(): ProposalData {
         selected: true,
         internalNote: "Особенно проверить карточки кейсов.",
       }),
-      makeDemoItem({
-        id: "demo-crm",
+      makeExampleItem({
+        id: "example-crm",
         title: "Интеграция формы с CRM",
         category: "Integration",
         description:
@@ -410,8 +462,8 @@ export function createDemoProposalData(): ProposalData {
         dependencyNote: "Нужны API-доступы и тестовый пользователь CRM.",
         internalNote: "Заложить буфер на CORS и rate limits.",
       }),
-      makeDemoItem({
-        id: "demo-animations",
+      makeExampleItem({
+        id: "example-animations",
         title: "Доработка анимаций",
         category: "Design",
         description:
@@ -431,14 +483,14 @@ export function createDemoProposalData(): ProposalData {
         selected: false,
         internalNote: "Не переборщить с motion на слабых устройствах.",
       }),
-      makeDemoItem({
-        id: "demo-qa",
+      makeExampleItem({
+        id: "example-qa",
         title: "Дополнительный QA прогон",
         category: "QA",
         description:
           "Расширенная проверка после внесения корректировок: основные сценарии, формы, адаптив и критичные браузеры.",
         clientValue:
-          "Снижает риск регрессий перед демонстрацией стейкхолдерам или публикацией.",
+          "Снижает риск регрессий перед презентацией стейкхолдерам или публикацией.",
         deliverables: [
           "QA checklist по ключевым сценариям",
           "Список найденных дефектов",
@@ -454,8 +506,8 @@ export function createDemoProposalData(): ProposalData {
         dependencyNote: "QA стартует после заморозки списка корректировок.",
         internalNote: "Отдельно пройти Safari.",
       }),
-      makeDemoItem({
-        id: "demo-urgent",
+      makeExampleItem({
+        id: "example-urgent",
         title: "Срочная итерация за 48 часов",
         category: "Urgent",
         description:
@@ -481,8 +533,8 @@ export function createDemoProposalData(): ProposalData {
           "Работает только при быстром согласовании и доступности материалов.",
         internalNote: "Перед включением проверить загрузку команды.",
       }),
-      makeDemoItem({
-        id: "demo-pdf-guide",
+      makeExampleItem({
+        id: "example-pdf-guide",
         title: "Подготовка PDF-инструкции для команды клиента",
         category: "Content",
         description:
@@ -504,14 +556,14 @@ export function createDemoProposalData(): ProposalData {
         dependencyNote: "Нужна финальная структура админки после релиза.",
         internalNote: "Можно собрать из existing support notes.",
       }),
-      makeDemoItem({
-        id: "demo-case-page",
+      makeExampleItem({
+        id: "example-case-page",
         title: "Дополнительная страница кейса",
         category: "Development",
         description:
           "Создание новой страницы кейса на базе существующих компонентов с адаптацией структуры под материал клиента.",
         clientValue:
-          "У клиента появляется дополнительный продающий материал для демонстрации экспертизы и результатов.",
+          "У клиента появляется дополнительный продающий материал для презентации экспертизы и результатов.",
         deliverables: [
           "Страница кейса в существующем стиле",
           "Адаптация блоков под контент",
@@ -531,23 +583,23 @@ export function createDemoProposalData(): ProposalData {
   };
 }
 
-export function createDoplistAiInputExampleData(): DoplistAiInputData {
-  return toDoplistProposalJson(createDemoProposalData(), {
+export function createScopeListAiInputExampleData(): ScopeListAiInputData {
+  return toScopeListProposalJson(createExampleProposalData(), {
     includeSystemIds: false,
     estimateConfidence: "medium",
     estimateSource: "ai_estimate",
-  }) as DoplistAiInputData;
+  }) as ScopeListAiInputData;
 }
 
-export function exportProposalDataForJson(data: ProposalData): DoplistProposalJson {
-  return toDoplistProposalJson(normalizeProposalData(data) || data, {
+export function exportProposalDataForJson(data: ProposalData): ScopeListProposalJson {
+  return toScopeListProposalJson(normalizeProposalData(data) || data, {
     includeSystemIds: true,
     estimateConfidence: "high",
     estimateSource: "user_confirmed",
-  }) as DoplistProposalJson;
+  }) as ScopeListProposalJson;
 }
 
-function toDoplistProposalJson(
+function toScopeListProposalJson(
   data: ProposalData,
   {
     estimateConfidence,
@@ -558,7 +610,7 @@ function toDoplistProposalJson(
     estimateSource: EstimateSource;
     includeSystemIds: boolean;
   },
-): DoplistProposalJson | DoplistAiInputData {
+): ScopeListProposalJson | ScopeListAiInputData {
   return {
     project: {
       projectTitle: data.project.projectTitle,
@@ -576,7 +628,7 @@ function toDoplistProposalJson(
       notes: data.project.notes,
     },
     items: data.items.map((item) =>
-      toDoplistItemJson(item, data.project.currency || "RUB", {
+      toScopeListItemJson(item, data.project.currency || "RUB", {
         estimateConfidence,
         estimateSource,
         includeSystemId: includeSystemIds,
@@ -585,7 +637,7 @@ function toDoplistProposalJson(
   };
 }
 
-function toDoplistItemJson(
+function toScopeListItemJson(
   item: ChangeItem,
   currency: string,
   {
@@ -597,9 +649,9 @@ function toDoplistItemJson(
     estimateSource: EstimateSource;
     includeSystemId: boolean;
   },
-): DoplistJsonItem {
+): ScopeListJsonItem {
   const type: ChangeItemType = item.required ? "required" : "optional";
-  const baseItem: Omit<DoplistJsonItem, "id"> = {
+  const baseItem: Omit<ScopeListJsonItem, "id"> = {
     title: item.title,
     category: item.category,
     type,
@@ -667,21 +719,21 @@ export function buildPublicProposalUrl(origin: string, shareSlug: string) {
   return url.toString();
 }
 
-export function validateDoplistAiInputData(value: unknown) {
-  return validateDoplistJsonData(value, {
+export function validateScopeListAiInputData(value: unknown) {
+  return validateScopeListJsonData(value, {
     allowSystemIds: false,
     requireSystemIds: false,
   });
 }
 
-export function validateDoplistProposalJsonData(value: unknown) {
-  return validateDoplistJsonData(value, {
+export function validateScopeListProposalJsonData(value: unknown) {
+  return validateScopeListJsonData(value, {
     allowSystemIds: true,
     requireSystemIds: true,
   });
 }
 
-function validateDoplistJsonData(
+function validateScopeListJsonData(
   value: unknown,
   {
     allowSystemIds,
@@ -750,7 +802,7 @@ function validateDoplistJsonData(
     errors.push("items must be an array");
   } else {
     value.items.forEach((item, index) =>
-      validateDoplistJsonItem(item, `items[${index}]`, {
+      validateScopeListJsonItem(item, `items[${index}]`, {
         allowSystemIds,
         requireSystemIds,
         errors,
@@ -761,7 +813,7 @@ function validateDoplistJsonData(
   return { valid: errors.length === 0, errors };
 }
 
-function validateDoplistJsonItem(
+function validateScopeListJsonItem(
   item: unknown,
   path: string,
   {
@@ -922,7 +974,7 @@ export function normalizeProposalData(value: unknown): ProposalData | null {
 }
 
 function normalizeProjectSettings(value: unknown): ProposalData["project"] {
-  const base = createDemoProposalData().project;
+  const base = createDefaultProposalData().project;
   const source = asRecord(value);
 
   return {
@@ -1133,7 +1185,7 @@ function emptyToNull(value: string) {
   return trimmed ? trimmed : null;
 }
 
-function makeDemoItem(
+function makeExampleItem(
   item: Omit<
     ChangeItem,
     "quantity" | "unit" | "status" | "priority" | "dependencyNote" | "internalNote"

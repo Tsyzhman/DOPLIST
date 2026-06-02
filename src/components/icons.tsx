@@ -1,4 +1,5 @@
 export { default as AlertTriangle } from "lucide-react/dist/esm/icons/alert-triangle.mjs";
+export { default as ArrowLeft } from "lucide-react/dist/esm/icons/arrow-left.mjs";
 export { default as ArrowRight } from "lucide-react/dist/esm/icons/arrow-right.mjs";
 export { default as BadgeCheck } from "lucide-react/dist/esm/icons/badge-check.mjs";
 export { default as CalendarClock } from "lucide-react/dist/esm/icons/calendar-clock.mjs";

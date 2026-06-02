@@ -1,6 +1,15 @@
 "use client";
 
-import { Eye, Hammer, Layers3 } from "@/components/icons";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Copy,
+  Eye,
+  Hammer,
+  Layers3,
+  Link2,
+  Save,
+} from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { ChangeItemForm } from "./ChangeItemForm";
 import { ChangeItemList } from "./ChangeItemList";
@@ -13,49 +22,61 @@ import {
   ThemeToggle,
   type ThemeMode,
 } from "./ThemeToggle";
-import { Badge } from "./Ui";
+import { Badge, Button } from "./Ui";
 import {
-  createDemoProposalData,
   createEmptyChangeItem,
   createId,
+  createScopeListIndexEntry,
+  getScopeListDataStorageKey,
   normalizeProposalData,
-  PROPOSAL_RECORD_ID_KEY,
-  STORAGE_KEY,
+  SCOPELIST_INDEX_KEY,
 } from "@/lib/proposal";
 import type {
   ChangeItem,
   ProjectSettings,
   ProposalData,
   ProposalMode,
+  ScopeListIndexEntry,
 } from "@/lib/types";
 
 type AppShellClientProps = {
   initialData: ProposalData;
+  listId: string;
 };
 
-export function AppShellClient({ initialData }: AppShellClientProps) {
+export function AppShellClient({ initialData, listId }: AppShellClientProps) {
   const [data, setData] = useState<ProposalData>(initialData);
   const [mode, setMode] = useState<ProposalMode>("builder");
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [hydrated, setHydrated] = useState(false);
   const [serverProposalId, setServerProposalId] = useState<string | null>(null);
+  const [publishedUrl, setPublishedUrl] = useState("");
   const [editingItem, setEditingItem] = useState<ChangeItem | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [notice, setNotice] = useState("Загружены демо-данные");
+  const [notice, setNotice] = useState("Готово к работе");
+  const listStorageKey = useMemo(
+    () => getScopeListDataStorageKey(listId),
+    [listId],
+  );
 
   useEffect(() => {
     let nextData: ProposalData | null = null;
-    let nextNotice = "Загружены демо-данные";
+    let nextNotice = "Готово к работе";
     let nextServerProposalId: string | null = null;
+    let nextPublishedUrl = "";
     let nextTheme: ThemeMode | null = null;
 
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      const storedRecordId = window.localStorage.getItem(PROPOSAL_RECORD_ID_KEY);
+      const stored = window.localStorage.getItem(listStorageKey);
       const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+      const indexEntry = readScopeListIndex().find((entry) => entry.id === listId);
 
-      if (storedRecordId) {
-        nextServerProposalId = storedRecordId;
+      if (indexEntry?.recordId) {
+        nextServerProposalId = indexEntry.recordId;
+      }
+
+      if (indexEntry?.publicUrl) {
+        nextPublishedUrl = indexEntry.publicUrl;
       }
 
       if (storedTheme === "light" || storedTheme === "dark") {
@@ -70,7 +91,7 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
         }
       }
     } catch {
-      nextNotice = "Загружены демо-данные";
+      nextNotice = "Готово к работе";
     }
 
     const timer = window.setTimeout(() => {
@@ -80,6 +101,9 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
       if (nextServerProposalId) {
         setServerProposalId(nextServerProposalId);
       }
+      if (nextPublishedUrl) {
+        setPublishedUrl(nextPublishedUrl);
+      }
       if (nextTheme) {
         setTheme(nextTheme);
       }
@@ -88,15 +112,21 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [initialData, listId, listStorageKey]);
 
   useEffect(() => {
     if (!hydrated) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data, hydrated]);
+    persistScopeList({
+      data,
+      listId,
+      publicUrl: publishedUrl,
+      recordId: serverProposalId || "",
+      storageKey: listStorageKey,
+    });
+  }, [data, hydrated, listId, listStorageKey, publishedUrl, serverProposalId]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -109,6 +139,11 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
   }, [theme, hydrated]);
 
   const activeId = editingId ?? editingItem?.id ?? null;
+  const publicUrl = publishedUrl;
+  const publicationLabel = publishedUrl ? "Опубликовано" : "Черновик";
+  const publicationTone = publishedUrl
+    ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+    : "bg-zinc-100 text-zinc-700 ring-zinc-200";
 
   const sortedItems = useMemo(
     () =>
@@ -234,7 +269,9 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
     const parsed = normalizeProposalData(value);
 
     if (!parsed) {
-      alert("Не удалось импортировать JSON. Структура proposal не распознана.");
+      alert(
+        "Не удалось импортировать JSON. Структура proposal не распознана.",
+      );
       return;
     }
 
@@ -248,7 +285,6 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
 
     if (!serverProposalId) {
       setServerProposalId(proposalId);
-      window.localStorage.setItem(PROPOSAL_RECORD_ID_KEY, proposalId);
     }
 
     setNotice("Публикуем клиентскую ссылку");
@@ -271,86 +307,120 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
 
     if (!response.ok || !result.publicUrl) {
       setNotice("Не удалось опубликовать ссылку");
-      alert(result.error || "Не удалось опубликовать клиентскую ссылку.");
+      alert(
+        result.error ||
+          "Не удалось опубликовать клиентскую ссылку.",
+      );
       return;
     }
 
     try {
       await navigator.clipboard.writeText(result.publicUrl);
+      setPublishedUrl(result.publicUrl);
       setNotice("Публичная ссылка опубликована и скопирована");
     } catch {
       window.prompt("Скопируйте клиентскую ссылку", result.publicUrl);
+      setPublishedUrl(result.publicUrl);
       setNotice("Публичная ссылка подготовлена");
     }
   }
 
-  function resetDemoData() {
-    setData(createDemoProposalData());
-    cancelEdit();
-    setNotice("Демо-данные восстановлены");
+  function saveCurrentData() {
+    persistScopeList({
+      data,
+      listId,
+      publicUrl: publishedUrl,
+      recordId: serverProposalId || "",
+      storageKey: listStorageKey,
+    });
+    setNotice("Сохранено локально");
+  }
+
+  async function copyPublishedLink() {
+    if (!publicUrl) {
+      await copyShareLink();
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setNotice("Клиентская ссылка скопирована");
+    } catch {
+      window.prompt("Скопируйте клиентскую ссылку", publicUrl);
+      setNotice("Клиентская ссылка подготовлена");
+    }
+  }
+
+  function openPublicLink() {
+    if (!publicUrl) {
+      setNotice("Сначала опубликуйте клиентскую ссылку");
+      return;
+    }
+
+    window.open(publicUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
-    <div className="doplist-theme min-h-screen bg-main text-ink">
+    <div className="scopelist-theme min-h-screen bg-main text-ink">
       <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+          <div className="flex items-start gap-3">
+            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
               <Layers3 size={18} aria-hidden="true" />
             </div>
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-emerald-50 text-emerald-800 ring-emerald-200">
-                  {hydrated ? notice : "Готовим localStorage"}
-                </Badge>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-600 transition hover:text-zinc-950"
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                Назад к списку
+              </Link>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge className={publicationTone}>{publicationLabel}</Badge>
+                <span className="text-sm text-zinc-500">
+                  Версия {data.project.version || "v1.0"}
+                </span>
               </div>
-              <h1 className="mt-1 text-base font-semibold tracking-[0.18em] text-zinc-950">
-                DOPLIST
+              <h1 className="mt-1 text-xl font-semibold text-zinc-950">
+                {data.project.projectTitle || "Новый scope-лист"}
               </h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ThemeToggle theme={theme} onChange={setTheme} />
-            <ImportExportControls
-              data={data}
-              onImport={importData}
-              onCopyShareLink={copyShareLink}
-              onReset={resetDemoData}
-            />
-            <div className="grid h-10 w-full grid-cols-2 rounded-md border border-zinc-200 bg-zinc-50 p-1 sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setMode("builder")}
-                aria-pressed={mode === "builder"}
-                className={`inline-flex items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition ${
-                  mode === "builder"
-                    ? "bg-paper text-zinc-950 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-900"
-                }`}
-              >
-                <Hammer size={16} aria-hidden="true" />
-                Редактор
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("preview")}
-                aria-pressed={mode === "preview"}
-                className={`inline-flex items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition ${
-                  mode === "preview"
-                    ? "bg-paper text-zinc-950 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-900"
-                }`}
-              >
+            <ImportExportControls data={data} onImport={importData} />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setMode(mode === "builder" ? "preview" : "builder")}
+            >
+              {mode === "builder" ? (
                 <Eye size={16} aria-hidden="true" />
-                Презентация
-              </button>
-            </div>
+              ) : (
+                <Hammer size={16} aria-hidden="true" />
+              )}
+              {mode === "builder" ? "Предпросмотр" : "Редактор"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!hydrated}
+              onClick={saveCurrentData}
+            >
+              <Save size={16} aria-hidden="true" />
+              Сохранить
+            </Button>
+            <Button type="button" onClick={copyShareLink}>
+              <Link2 size={16} aria-hidden="true" />
+              Опубликовать
+            </Button>
           </div>
         </div>
       </header>
 
       {mode === "builder" ? (
-        <main className="builder-grid mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 xl:grid-cols-[minmax(0,760px)_minmax(520px,1fr)]">
+        <main className="builder-grid relative z-10 mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="builder-panel space-y-5">
             <ProjectSettingsForm value={data.project} onChange={updateProject} />
             <ChangeItemForm
@@ -373,13 +443,18 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
             />
           </div>
 
-          <div className="space-y-4">
-            <SummaryCard data={data} />
-            <ProposalPreview
-              data={data}
-              onToggleOptional={toggleOptionalSelected}
+          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start no-print">
+            <PublicationCard
+              publicUrl={publicUrl}
+              statusLabel={publicationLabel}
+              statusTone={publicationTone}
+              notice={notice}
+              onPublish={copyShareLink}
+              onCopy={copyPublishedLink}
+              onOpen={openPublicLink}
             />
-          </div>
+            <SummaryCard data={data} compact />
+          </aside>
         </main>
       ) : (
         <main className="mx-auto max-w-5xl px-4 py-6">
@@ -403,4 +478,130 @@ function normalizeItem(item: ChangeItem): ChangeItem {
     optional: !required,
     selected: required ? true : item.selected,
   };
+}
+
+function PublicationCard({
+  publicUrl,
+  statusLabel,
+  statusTone,
+  notice,
+  onPublish,
+  onCopy,
+  onOpen,
+}: {
+  publicUrl: string;
+  statusLabel: string;
+  statusTone: string;
+  notice: string;
+  onPublish: () => void;
+  onCopy: () => void;
+  onOpen: () => void;
+}) {
+  return (
+    <section className="rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            Публикация
+          </p>
+          <h2 className="mt-1 text-lg font-semibold">Клиентская ссылка</h2>
+        </div>
+        <Badge className={statusTone}>{statusLabel}</Badge>
+      </div>
+
+      <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-600">
+        {publicUrl ||
+          "Ссылка появится после публикации scope-листа."}
+      </div>
+
+      <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-600">
+        {notice}
+      </div>
+
+      <div className="mt-4 grid gap-2">
+        <Button type="button" onClick={onPublish}>
+          <Link2 size={16} aria-hidden="true" />
+          Опубликовать
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCopy}>
+          <Copy size={16} aria-hidden="true" />
+          Скопировать ссылку
+        </Button>
+        <Button type="button" variant="secondary" onClick={onOpen}>
+          <Eye size={16} aria-hidden="true" />
+          Открыть клиентскую версию
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+type PersistScopeListOptions = {
+  data: ProposalData;
+  listId: string;
+  publicUrl: string;
+  recordId: string;
+  storageKey: string;
+};
+
+function persistScopeList({
+  data,
+  listId,
+  publicUrl,
+  recordId,
+  storageKey,
+}: PersistScopeListOptions) {
+  window.localStorage.setItem(storageKey, JSON.stringify(data));
+
+  const entries = readScopeListIndex();
+  const existing = entries.find((entry) => entry.id === listId);
+  const nextEntry = createScopeListIndexEntry(listId, data, {
+    ...existing,
+    publicUrl,
+    recordId,
+    status: publicUrl ? "published" : "draft",
+    updatedAt: new Date().toISOString(),
+  });
+
+  writeScopeListIndex(upsertScopeListIndexEntry(entries, nextEntry));
+}
+
+function readScopeListIndex(): ScopeListIndexEntry[] {
+  try {
+    const raw = window.localStorage.getItem(SCOPELIST_INDEX_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+
+    return Array.isArray(parsed)
+      ? parsed.filter(isScopeListIndexEntry)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeScopeListIndex(entries: ScopeListIndexEntry[]) {
+  window.localStorage.setItem(SCOPELIST_INDEX_KEY, JSON.stringify(entries));
+}
+
+function upsertScopeListIndexEntry(
+  entries: ScopeListIndexEntry[],
+  nextEntry: ScopeListIndexEntry,
+) {
+  const nextEntries = entries.filter((entry) => entry.id !== nextEntry.id);
+  nextEntries.unshift(nextEntry);
+
+  return nextEntries.sort(
+    (left, right) =>
+      new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
+  );
+}
+
+function isScopeListIndexEntry(value: unknown): value is ScopeListIndexEntry {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const entry = value as Partial<ScopeListIndexEntry>;
+
+  return typeof entry.id === "string" && typeof entry.title === "string";
 }

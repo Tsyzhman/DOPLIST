@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/AppShell";
+import { ScopeListDashboard } from "@/components/ScopeListDashboard";
 
 export default function Home() {
-  return <AppShell />;
+  return <ScopeListDashboard />;
 }

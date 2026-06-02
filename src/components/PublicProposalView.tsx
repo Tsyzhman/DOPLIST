@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, MessageSquareText } from "@/components/icons";
+import { Button } from "@/components/Ui";
 import { useEffect, useState } from "react";
 import type { ProposalData, ProposalEventType } from "@/lib/types";
 import { ProposalPreview } from "./ProposalPreview";
@@ -79,32 +80,31 @@ export function PublicProposalView({
   }
 
   return (
-    <div className="doplist-theme min-h-screen bg-main text-ink">
+    <div className="scopelist-theme min-h-screen bg-main text-ink">
       <main className="mx-auto max-w-5xl px-4 py-6">
         <div className="no-print mb-4 flex flex-wrap justify-end gap-2">
           <ThemeToggle theme={theme} onChange={setTheme} />
-          <button
+          <Button
             type="button"
             disabled={!approvalDestination}
             onClick={() => {
               handleCta("approve_scope", approvalDestination);
             }}
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <CheckCircle2 size={16} aria-hidden="true" />
             Согласовать
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             disabled={!discussionDestination}
             onClick={() => {
               handleCta("request_discussion", discussionDestination);
             }}
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <MessageSquareText size={16} aria-hidden="true" />
             Обсудить
-          </button>
+          </Button>
         </div>
 
         <ProposalPreview

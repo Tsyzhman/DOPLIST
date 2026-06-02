@@ -1,9 +1,9 @@
-name: price-presentation
+name: scopelist
 
 services:
   web:
-    image: price-presentation-web:latest
-    container_name: price-presentation-web
+    image: scopelist-web:latest
+    container_name: scopelist-web
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,7 +23,7 @@ services:
     ports:
       - "127.0.0.1:${APP_PORT:-3004}:3000"
     volumes:
-      - doplist-data:/app/.data
+      - scopelist-data:/app/.data
     mem_limit: 512m
     mem_reservation: 128m
     cpus: 0.5
@@ -38,8 +38,8 @@ services:
 
   archive-worker:
     profiles: ["worker"]
-    image: price-presentation-archive-worker:latest
-    container_name: price-presentation-archive-worker
+    image: scopelist-archive-worker:latest
+    container_name: scopelist-archive-worker
     build:
       context: .
       dockerfile: Dockerfile
@@ -55,7 +55,7 @@ services:
       NODE_OPTIONS: "--max-old-space-size=128"
     command: ["node", "scripts/proposal-archive-worker.mjs"]
     volumes:
-      - doplist-data:/app/.data
+      - scopelist-data:/app/.data
     mem_limit: 192m
     mem_reservation: 64m
     cpus: 0.2
@@ -70,8 +70,8 @@ services:
 
 networks:
   default:
-    name: price-presentation-net
+    name: scopelist-net
 
 volumes:
-  doplist-data:
-    name: price-presentation-data
+  scopelist-data:
+    name: scopelist-data

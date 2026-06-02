@@ -1,4 +1,5 @@
 import { Check, Plus, Save, X } from "@/components/icons";
+import { Button, SectionCard } from "@/components/Ui";
 import {
   categories,
   categoryLabels,
@@ -32,23 +33,20 @@ export function ChangeItemForm({
 }: ChangeItemFormProps) {
   if (!item) {
     return (
-      <section className="rounded-lg border border-dashed border-zinc-300 bg-white p-5 text-center">
-        <h2 className="text-lg font-semibold text-zinc-950">
-          Добавьте корректировку
-        </h2>
+      <SectionCard title="Добавьте корректировку" eyebrow="Новая позиция">
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-600">
           Создайте новую позицию, затем заполните описание, стоимость, сроки и
           клиентскую ценность. Презентация обновится сразу после сохранения.
         </p>
-        <button
+        <Button
           type="button"
           onClick={onAdd}
-          className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800"
+          className="mt-4"
         >
           <Plus size={16} aria-hidden="true" />
           Добавить корректировку
-        </button>
-      </section>
+        </Button>
+      </SectionCard>
     );
   }
 
@@ -68,38 +66,32 @@ export function ChangeItemForm({
   }
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            {isNew ? "Новая корректировка" : "Редактирование"}
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-zinc-950">
-            {isNew ? "Новая корректировка" : item.title || "Без названия"}
-          </h2>
-        </div>
+    <SectionCard
+      title={isNew ? "Новая корректировка" : item.title || "Без названия"}
+      eyebrow={isNew ? "Новая корректировка" : "Редактирование"}
+      action={
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onCancel}
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
           >
             <X size={16} aria-hidden="true" />
             Отмена
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={hasErrors}
             onClick={() => onSave(item)}
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
           >
             <Save size={16} aria-hidden="true" />
             Сохранить
-          </button>
+          </Button>
         </div>
-      </div>
+      }
+    >
 
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <TextInput
           label="Название"
           value={item.title}
@@ -203,7 +195,7 @@ export function ChangeItemForm({
               }
               className={`inline-flex items-center justify-center gap-1 rounded px-2 text-sm font-medium transition ${
                 item.required
-                  ? "bg-white text-zinc-950 shadow-sm"
+                  ? "bg-paper text-zinc-950 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
@@ -217,7 +209,7 @@ export function ChangeItemForm({
               }
               className={`inline-flex items-center justify-center gap-1 rounded px-2 text-sm font-medium transition ${
                 item.optional
-                  ? "bg-white text-zinc-950 shadow-sm"
+                  ? "bg-paper text-zinc-950 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
@@ -255,7 +247,7 @@ export function ChangeItemForm({
           onChange={(internalNote) => update({ internalNote })}
         />
       </div>
-    </section>
+    </SectionCard>
   );
 }
 

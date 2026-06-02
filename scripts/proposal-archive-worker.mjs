@@ -235,7 +235,7 @@ async function archiveProposal(config, store, telegram, originalProposal, now) {
 
     for (let index = 0; index < chunks.length; index += 1) {
       const header = [
-        `#DOPLIST #archive #${toTelegramTag(archiveCode)}`,
+        `#SCOPELIST #archive #${toTelegramTag(archiveCode)}`,
         `КП: ${archiveCode}`,
         `Часть: ${index + 1}/${chunks.length}`,
         `sha256: ${textHash}`,
@@ -247,7 +247,7 @@ async function archiveProposal(config, store, telegram, originalProposal, now) {
 
     const completedMessageId = await telegram.sendMessage(
       [
-        `#DOPLIST #archive #complete #${toTelegramTag(archiveCode)}`,
+        `#SCOPELIST #archive #complete #${toTelegramTag(archiveCode)}`,
         "ARCHIVE COMPLETE",
         `КП: ${archiveCode}`,
         `proposal_id: ${proposalId}`,
@@ -354,7 +354,7 @@ class TelegramArchiveClient {
     }
 
     const text = [
-      "#DOPLIST #archive_failed",
+      "#SCOPELIST #archive_failed",
       `КП: ${getArchiveCode(proposal)}`,
       `proposal_id: ${getProposalId(proposal)}`,
       `error: ${String(error?.message || error).slice(0, 900)}`,
@@ -759,7 +759,7 @@ function renderProposalArchiveText(proposal, options) {
     packages[0];
 
   const lines = [
-    `#DOPLIST #archive #${toTelegramTag(archiveCode)}`,
+    `#SCOPELIST #archive #${toTelegramTag(archiveCode)}`,
     "",
     `КП: ${archiveCode}`,
     `ID: ${getProposalId(proposal)}`,
@@ -871,7 +871,7 @@ function renderLegacyProposalData(data, options) {
     .filter((item) => item.required || (item.optional && item.selected))
     .reduce((sum, item) => sum + readNumberValue(item, "estimatedDays"), 0);
   const lines = [
-    `#DOPLIST #archive #${toTelegramTag(archiveCode)}`,
+    `#SCOPELIST #archive #${toTelegramTag(archiveCode)}`,
     "",
     `КП: ${archiveCode}`,
     `Клиент: ${project.clientName || "не указан"}`,
@@ -1306,7 +1306,7 @@ function runSelfTest() {
     shareSlug: "DPL-SELF-TEST",
     title: "Тестовое коммерческое предложение",
     clientName: "ACME Studio",
-    preparedBy: "DOPLIST",
+    preparedBy: "SCOPELIST",
     proposalDate: "2026-05-31",
     version: "v1.0",
     currency: "RUB",

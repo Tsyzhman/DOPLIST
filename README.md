@@ -1,6 +1,6 @@
-# DOPLIST
+# SCOPELIST
 
-Digital Offer & Proposal List for Interactive Scope Tracking.
+Scope lists for publishing and tracking client-facing work packages.
 
 ## Development
 
@@ -80,7 +80,7 @@ bash scripts/install-archive-cron.sh
 
 ## Telegram Archive Worker
 
-DOPLIST can archive old proposals to a private Telegram chat and then purge heavy proposal content from the database after the retention window.
+SCOPELIST can archive old proposals to a private Telegram chat and then purge heavy proposal content from the database after the retention window.
 
 Required production env:
 
@@ -111,9 +111,9 @@ For production Supabase, apply `supabase/migrations/20260531000000_proposal_arch
 
 Current Docker shape:
 
-- `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `price-presentation-web:latest`, with the `price-presentation-data` Docker volume mounted at `/app/.data` for file-store public sharing fallback.
-- `archive-worker`: separate `worker` Docker target and image `price-presentation-archive-worker:latest`, enabled only with `--profile worker`.
-- `price-presentation-data`: named Docker volume for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used. The image creates `/app/.data` as `nextjs:nodejs` so the non-root app can write temp files safely.
+- `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `scopelist-web:latest`, with the `scopelist-data` Docker volume mounted at `/app/.data` for file-store public sharing fallback.
+- `archive-worker`: separate `worker` Docker target and image `scopelist-archive-worker:latest`, enabled only with `--profile worker`.
+- `scopelist-data`: named Docker volume for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used. The image creates `/app/.data` as `nextjs:nodejs` so the non-root app can write temp files safely.
 
 Public sharing env:
 
@@ -134,10 +134,10 @@ Resource limits:
 - `archive-worker`: `cpus: 0.2`, `mem_limit: 192m`, `mem_reservation: 64m`, `NODE_OPTIONS=--max-old-space-size=128`.
 - Compose `deploy.resources` mirrors these values for Swarm or `docker compose --compatibility`.
 
-Sizing guidance for a polished demo deployment:
+Sizing guidance for a compact production deployment:
 
 - CPU: `0.5 vCPU` for web; the one-shot archive worker may briefly add up to `0.2 vCPU`.
 - RAM: `0.4-0.8 GB` for web; worker memory is transient and capped at `192 MB`.
-- Disk: `2-5 GB` for the optimized web/worker images plus the `price-presentation-data` volume.
+- Disk: `2-5 GB` for the optimized web/worker images plus the `scopelist-data` volume.
 
-If DOPLIST starts receiving real traffic instead of demo load, raise web `mem_limit` to `1g` and remove or increase `NODE_OPTIONS=--max-old-space-size`.
+If SCOPELIST starts receiving heavier production traffic, raise web `mem_limit` to `1g` and remove or increase `NODE_OPTIONS=--max-old-space-size`.

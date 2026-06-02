@@ -6,6 +6,7 @@ import {
   Trash2,
   WalletCards,
 } from "@/components/icons";
+import { Button, SectionCard } from "@/components/Ui";
 import type { ReactNode } from "react";
 import {
   calculateItemTotal,
@@ -47,27 +48,22 @@ export function ChangeItemList({
     .filter((group) => group.items.length > 0);
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Список корректировок
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-zinc-950">
-            Корректировки по категориям
-          </h2>
-        </div>
+    <SectionCard
+      title="Корректировки по категориям"
+      eyebrow="Список корректировок"
+      action={
         <div className="rounded-md bg-zinc-100 p-2 text-zinc-700">
           <Layers3 size={20} aria-hidden="true" />
         </div>
-      </div>
+      }
+    >
 
       {items.length === 0 ? (
-        <div className="mt-5 rounded-md border border-dashed border-zinc-300 p-5 text-sm text-zinc-500">
+        <div className="rounded-md border border-dashed border-zinc-300 p-5 text-sm text-zinc-500">
           Пока нет корректировок. Добавьте первую позицию через форму выше.
         </div>
       ) : (
-        <div className="mt-5 space-y-5">
+        <div className="space-y-5">
           {grouped.map((group) => (
             <div key={group.category} className="space-y-3">
               <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
@@ -99,7 +95,7 @@ export function ChangeItemList({
           ))}
         </div>
       )}
-    </section>
+    </SectionCard>
   );
 }
 
@@ -188,7 +184,7 @@ function ChangeListCard({
               onClick={() => onToggleType("required")}
               className={`rounded px-2 text-xs font-semibold transition ${
                 item.required
-                  ? "bg-white text-zinc-950 shadow-sm"
+                  ? "bg-paper text-zinc-950 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
@@ -199,7 +195,7 @@ function ChangeListCard({
               onClick={() => onToggleType("optional")}
               className={`rounded px-2 text-xs font-semibold transition ${
                 item.optional
-                  ? "bg-white text-zinc-950 shadow-sm"
+                  ? "bg-paper text-zinc-950 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
@@ -246,19 +242,16 @@ function IconButton({
   danger?: boolean;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant={danger ? "danger" : "ghost"}
       title={label}
       aria-label={label}
       onClick={onClick}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-md border transition ${
-        danger
-          ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-          : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
-      }`}
+      className="h-9 w-9 px-0"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 

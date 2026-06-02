@@ -1,6 +1,11 @@
-import { createDemoProposalData } from "@/lib/proposal";
+import { createDefaultProposalData } from "@/lib/proposal";
 import { AppShellClient } from "./AppShellClient";
 
-export function AppShell() {
-  return <AppShellClient initialData={createDemoProposalData()} />;
+export function AppShell({ listId }: { listId: string }) {
+  return (
+    <AppShellClient
+      initialData={createDefaultProposalData()}
+      listId={listId}
+    />
+  );
 }

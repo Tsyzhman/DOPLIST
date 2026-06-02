@@ -9,7 +9,7 @@ const onest = Onest({
   display: "swap",
 });
 
-const THEME_STORAGE_KEY = "doplist-ui-theme-v1";
+const THEME_STORAGE_KEY = "scopelist-ui-theme-v1";
 
 const themeScript = `
 (() => {
@@ -31,9 +31,9 @@ const themeScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "DOPLIST",
+  title: "SCOPELIST",
   description:
-    "Digital Offer & Proposal List for Interactive Scope Tracking",
+    "Scope lists for publishing and tracking client-facing work packages",
 };
 
 export default function RootLayout({
