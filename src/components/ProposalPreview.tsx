@@ -1,9 +1,6 @@
 import {
   ArrowRight,
   BadgeCheck,
-  CalendarClock,
-  CircleDollarSign,
-  ClipboardCheck,
   Layers3,
   ShieldCheck,
 } from "@/components/icons";
@@ -56,46 +53,47 @@ export function ProposalPreview({
 
   return (
     <article className="proposal-preview overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-200/70">
-      <section className="proposal-section relative overflow-hidden px-6 py-10 sm:px-10 sm:py-12">
-        <div className="absolute right-8 top-8 hidden h-24 w-24 rounded-full border border-emerald-200 bg-emerald-50 sm:block" />
-        <div className="relative">
-          <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-zinc-600">
-            <span className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-3 py-1.5 text-white">
-              <BadgeCheck size={16} aria-hidden="true" />
-              SCOPELIST
-            </span>
-            <span>{data.project.version}</span>
-            <span className="h-1 w-1 rounded-full bg-zinc-300" />
-            <span>{data.project.proposalDate}</span>
-          </div>
-
-          <div className="mt-10 max-w-4xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+      <section className="relative overflow-hidden border-b border-zinc-200 bg-white text-zinc-950">
+        <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 lg:grid-cols-[1fr_320px] lg:py-20">
+          <div>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+              <span className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-1.5 font-semibold text-white">
+                <BadgeCheck size={16} aria-hidden="true" />
+                SCOPELIST
+              </span>
+              <span>{data.project.version}</span>
+              <span>{formatPreviewDate(data.project.proposalDate)}</span>
+            </div>
+            <p className="mt-10 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Подготовлено для {data.project.clientName || "клиента"}
             </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-6xl">
-              {data.project.projectTitle || "Proposal корректировок"}
+            <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-6xl">
+              {data.project.projectTitle || "Scope-лист корректировок"}
             </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-zinc-600">
+            <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
               {data.project.introSummary}
             </p>
           </div>
-
-          <div className="mt-10 grid gap-3 sm:grid-cols-3">
-            <CoverMetric
-              icon={<CircleDollarSign size={20} aria-hidden="true" />}
-              label="Итоговая стоимость"
-              value={formatMoney(grandTotal, data.project.currency)}
+          <div className="self-end rounded-lg border border-zinc-200 bg-zinc-50 p-5">
+            <CoverMetricRow
+              label="Клиент"
+              value={data.project.clientName || "Не указан"}
             />
-            <CoverMetric
-              icon={<CalendarClock size={20} aria-hidden="true" />}
-              label="Влияние на сроки"
-              value={`${totalDays} дн.`}
+            <CoverMetricRow
+              label="Дата"
+              value={formatPreviewDate(data.project.proposalDate)}
             />
-            <CoverMetric
-              icon={<ClipboardCheck size={20} aria-hidden="true" />}
+            <CoverMetricRow
               label="Подготовил"
               value={data.project.preparedBy || "Team"}
+            />
+            <CoverMetricRow
+              label="Бюджет"
+              value={formatMoney(grandTotal, data.project.currency)}
+            />
+            <CoverMetricRow
+              label="Сроки"
+              value={`${totalDays} дн.`}
             />
           </div>
         </div>
@@ -273,24 +271,38 @@ function ChangePreviewCard({
   );
 }
 
-function CoverMetric({
-  icon,
+function CoverMetricRow({
   label,
   value,
 }: {
-  icon: ReactNode;
   label: string;
   value: string;
 }) {
   return (
-    <div className="proposal-card rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-        <span className="text-emerald-700">{icon}</span>
+    <div className="flex items-baseline justify-between gap-3 border-b border-zinc-200 py-2 last:border-b-0">
+      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
         {label}
-      </div>
-      <div className="mt-2 text-xl font-semibold text-zinc-950">{value}</div>
+      </span>
+      <span className="text-sm font-semibold text-zinc-950">{value}</span>
     </div>
   );
+}
+
+function formatPreviewDate(value: string) {
+  if (!value) {
+    return "Не указана";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
 function SectionHeading({

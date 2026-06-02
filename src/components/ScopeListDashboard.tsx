@@ -1,8 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Copy, Pencil, Plus, Trash2 } from "@/components/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Copy,
+  Eye,
+  FilePenLine,
+  Link2,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from "@/components/icons";
 import {
   formatMoney,
   getScopeListDataStorageKey,
@@ -14,28 +22,30 @@ import {
   ThemeToggle,
   type ThemeMode,
 } from "./ThemeToggle";
-import { Badge, Button } from "./Ui";
 
 type DashboardFilter = "all" | ScopeListStatus;
 
-const filters: Array<{ label: string; value: DashboardFilter }> = [
-  { label: "Все", value: "all" },
-  { label: "Черновики", value: "draft" },
-  { label: "Опубликованные", value: "published" },
+const filters: Array<{ id: DashboardFilter; label: string }> = [
+  { id: "all", label: "Все" },
+  { id: "draft", label: "Черновики" },
+  { id: "published", label: "Опубликованные" },
 ];
+
+const statusLabels: Record<ScopeListStatus, string> = {
+  draft: "Черновик",
+  published: "Опубликовано",
+};
+
+const statusTone: Record<ScopeListStatus, string> = {
+  draft: "bg-zinc-100 text-zinc-700 ring-zinc-200",
+  published: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+};
 
 export function ScopeListDashboard() {
   const [entries, setEntries] = useState<ScopeListIndexEntry[]>([]);
   const [filter, setFilter] = useState<DashboardFilter>("all");
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [hydrated, setHydrated] = useState(false);
-  const filteredEntries = useMemo(
-    () =>
-      filter === "all"
-        ? entries
-        : entries.filter((entry) => entry.status === filter),
-    [entries, filter],
-  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -62,6 +72,27 @@ export function ScopeListDashboard() {
     document.documentElement.style.colorScheme = theme;
   }, [theme, hydrated]);
 
+  const filterCounts = useMemo(() => {
+    const counts: Partial<Record<DashboardFilter, number>> = {
+      all: entries.length,
+    };
+    for (const entry of entries) {
+      counts[entry.status] = (counts[entry.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [entries]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") {
+      return entries;
+    }
+    return entries.filter((entry) => entry.status === filter);
+  }, [filter, entries]);
+
+  const shownFrom = filtered.length > 0 ? 1 : 0;
+  const shownTo = filtered.length;
+  const totalItems = entries.length;
+
   function deleteEntry(entry: ScopeListIndexEntry) {
     if (!window.confirm(`Удалить «${entry.title}»?`)) {
       return;
@@ -86,60 +117,61 @@ export function ScopeListDashboard() {
   }
 
   return (
-    <main className="scopelist-theme min-h-screen bg-main text-ink">
-      <div className="mx-auto max-w-[1400px] px-4 py-6">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <main className="min-h-screen bg-zinc-50 text-zinc-900">
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-6 py-3">
           <Link
             href="/"
-            className="inline-flex text-lg font-bold tracking-[0.08em] text-zinc-950"
+            className="text-base font-semibold tracking-[0.18em] text-zinc-900"
           >
             SCOPELIST
           </Link>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <ThemeToggle theme={theme} onChange={setTheme} />
             <Link
               href="/lists/new"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-semibold text-white outline-none transition hover:bg-zinc-800 focus:ring-4 focus:ring-zinc-200"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-zinc-900 px-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
             >
               <Plus size={16} aria-hidden="true" />
               Новый лист
             </Link>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <section className="mt-8">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
-              Scope-листы
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-600">
-              Создавайте листы работ, публикуйте приватные клиентские ссылки и
-              возвращайтесь к нужному объёму без поиска по вкладкам.
-            </p>
-          </div>
+      <div className="mx-auto max-w-[1500px] px-6 py-10">
+        <section className="max-w-2xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
+            Scope-листы
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-500">
+            Создавайте листы работ, публикуйте приватные клиентские ссылки и
+            возвращайтесь к нужному объёму без поиска по вкладкам.
+          </p>
+        </section>
 
-          <nav className="mt-6 flex flex-wrap gap-2" aria-label="Фильтр листов">
+        <div className="mt-8 border-b border-zinc-200">
+          <nav className="-mb-px flex flex-wrap gap-x-6 gap-y-1">
             {filters.map((item) => {
-              const count = countEntries(entries, item.value);
-              const isActive = filter === item.value;
-
+              const count = filterCounts[item.id] ?? 0;
+              const active = filter === item.id;
               return (
                 <button
-                  key={item.value}
+                  key={item.id}
                   type="button"
-                  onClick={() => setFilter(item.value)}
-                  className={`inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm font-semibold transition ${
-                    isActive
-                      ? "border-zinc-900 bg-zinc-900 text-white"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                  onClick={() => setFilter(item.id)}
+                  className={`group inline-flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition ${
+                    active
+                      ? "border-zinc-900 text-zinc-950"
+                      : "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800"
                   }`}
                 >
                   {item.label}
                   {count > 0 ? (
                     <span
-                      className={`rounded px-1.5 py-0.5 text-xs ${
-                        isActive
-                          ? "bg-white/15 text-white"
+                      className={`inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${
+                        active
+                          ? "bg-zinc-900 text-white"
                           : "bg-zinc-100 text-zinc-600"
                       }`}
                     >
@@ -150,158 +182,312 @@ export function ScopeListDashboard() {
               );
             })}
           </nav>
-        </section>
+        </div>
 
-        <section className="mt-6 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="bg-zinc-50 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3">Лист</th>
-                  <th className="px-4 py-3">Клиент</th>
-                  <th className="px-4 py-3">Статус</th>
-                  <th className="px-4 py-3">Обновлено</th>
-                  <th className="px-4 py-3">Срок</th>
-                  <th className="px-4 py-3">Позиции</th>
-                  <th className="px-4 py-3">Цена</th>
-                  <th className="px-4 py-3 text-right">Действия</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {!hydrated ? (
-                  <tr>
-                    <td className="px-4 py-8 text-zinc-500" colSpan={8}>
-                      Загружаем список
-                    </td>
-                  </tr>
-                ) : filteredEntries.length > 0 ? (
-                  filteredEntries.map((entry) => (
-                    <tr key={entry.id} className="align-top hover:bg-zinc-50">
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/lists/${entry.id}/edit`}
-                          className="font-semibold text-zinc-950 hover:underline"
-                        >
-                          {entry.title}
-                        </Link>
-                        <div className="mt-1 text-xs text-zinc-500">
-                          {entry.version}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-zinc-700">
-                        {entry.clientName || "— не указан"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <StatusBadge status={entry.status} />
-                      </td>
-                      <td className="px-4 py-4 text-zinc-600">
-                        {formatDateTime(entry.updatedAt)}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-600">
-                        {formatDate(entry.proposalDate)}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-700">
-                        {entry.itemCount}
-                      </td>
-                      <td className="px-4 py-4 font-semibold text-zinc-950">
-                        {formatMoney(entry.total)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex justify-end gap-2">
+        <section className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+          {!hydrated ? (
+            <div className="px-5 py-12 text-sm text-zinc-500">
+              Загружаем список…
+            </div>
+          ) : filtered.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1080px] text-left text-sm">
+                  <thead className="border-b border-zinc-200 bg-zinc-50/60 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                    <tr>
+                      <th className="px-5 py-3 font-semibold">Лист</th>
+                      <th className="px-5 py-3 font-semibold">Клиент</th>
+                      <th className="px-5 py-3 font-semibold">Статус</th>
+                      <th className="px-5 py-3 font-semibold">Обновлено</th>
+                      <th className="px-5 py-3 font-semibold">Дата</th>
+                      <th className="px-5 py-3 font-semibold">Позиции</th>
+                      <th className="px-5 py-3 text-right font-semibold">Цена</th>
+                      <th className="w-0 px-5 py-3 font-semibold">
+                        <span className="sr-only">Действия</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {filtered.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className="align-middle transition hover:bg-zinc-50"
+                      >
+                        <td className="px-5 py-4">
                           <Link
                             href={`/lists/${entry.id}/edit`}
-                            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-50"
+                            className="block font-semibold text-zinc-950 hover:underline"
                           >
-                            <Pencil size={15} aria-hidden="true" />
-                            Редактировать
+                            {entry.title}
                           </Link>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-9 px-3"
-                            disabled={!entry.publicUrl}
-                            onClick={() => {
-                              copyPublicUrl(entry);
-                            }}
-                          >
-                            <Copy size={15} aria-hidden="true" />
-                            Ссылка
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="danger"
-                            className="h-9 px-3"
-                            onClick={() => {
-                              deleteEntry(entry);
-                            }}
-                            title="Удалить"
-                          >
-                            <Trash2 size={15} aria-hidden="true" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="px-4 py-10 text-center" colSpan={8}>
-                      <div className="mx-auto max-w-md">
-                        <p className="text-base font-semibold text-zinc-950">
-                          Листов пока нет
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-zinc-500">
-                          Создайте первый scope-лист, заполните состав работ и
-                          он появится в этой таблице.
-                        </p>
-                        <Link
-                          href="/lists/new"
-                          className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                        >
-                          <Plus size={16} aria-hidden="true" />
-                          Новый лист
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                          <div className="mt-0.5 text-xs text-zinc-500">
+                            {entry.version}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="font-medium text-zinc-800">
+                            {entry.clientName || (
+                              <span className="text-zinc-400">— не указан</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <StatusDot
+                            tone={statusTone[entry.status]}
+                            label={statusLabels[entry.status]}
+                          />
+                        </td>
+                        <td className="px-5 py-4 text-zinc-600">
+                          {formatDateTime(entry.updatedAt)}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-600">
+                          {formatDate(entry.proposalDate)}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="font-semibold tabular-nums text-zinc-900">
+                            {entry.itemCount}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-right font-medium tabular-nums text-zinc-800">
+                          {formatMoney(entry.total)}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <IconLink
+                              href={`/lists/${entry.id}/edit`}
+                              label="Редактировать"
+                            >
+                              <FilePenLine size={16} aria-hidden="true" />
+                            </IconLink>
+                            <IconButton
+                              onClick={() => copyPublicUrl(entry)}
+                              disabled={!entry.publicUrl}
+                              label="Скопировать ссылку"
+                            >
+                              <Copy size={16} aria-hidden="true" />
+                            </IconButton>
+                            <RowMenu
+                              entryId={entry.id}
+                              hasPublicUrl={Boolean(entry.publicUrl)}
+                              onRemove={() => deleteEntry(entry)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-col items-start justify-between gap-3 border-t border-zinc-200 px-5 py-3 text-xs text-zinc-500 md:flex-row md:items-center">
+                <span>
+                  Показано {shownFrom}–{shownTo} из {totalItems}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex min-h-72 flex-col items-center justify-center px-4 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+                <Link2 size={20} aria-hidden="true" />
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-zinc-950">
+                Листов нет
+              </h2>
+              <p className="mt-1 max-w-sm text-sm text-zinc-500">
+                В выбранном фильтре пока нет scope-листов.
+              </p>
+            </div>
+          )}
         </section>
-
-        <div className="mt-4 text-sm text-zinc-500">
-          Показано {filteredEntries.length} из {entries.length}
-        </div>
       </div>
     </main>
   );
 }
 
-function StatusBadge({ status }: { status: ScopeListStatus }) {
-  if (status === "published") {
-    return (
-      <Badge className="bg-emerald-50 text-emerald-800 ring-emerald-200">
-        Опубликовано
-      </Badge>
-    );
-  }
-
+function StatusDot({ tone, label }: { tone: string; label: string }) {
+  const dotColor = resolveDotColor(tone);
   return (
-    <Badge className="bg-zinc-100 text-zinc-700 ring-zinc-200">
-      Черновик
-    </Badge>
+    <span className="inline-flex items-center gap-2 text-sm text-zinc-700">
+      <span
+        aria-hidden="true"
+        className={`inline-block h-1.5 w-1.5 rounded-full ${dotColor}`}
+      />
+      {label}
+    </span>
   );
 }
 
-function countEntries(
-  entries: ScopeListIndexEntry[],
-  filter: DashboardFilter,
-) {
-  if (filter === "all") {
-    return entries.length;
-  }
+function resolveDotColor(tone: string): string {
+  if (tone.includes("emerald")) return "bg-emerald-500";
+  if (tone.includes("amber")) return "bg-amber-500";
+  if (tone.includes("rose")) return "bg-rose-500";
+  return "bg-zinc-400";
+}
 
-  return entries.filter((entry) => entry.status === filter).length;
+function IconLink({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function IconButton({
+  label,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      {...props}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {children}
+    </button>
+  );
+}
+
+function RowMenu({
+  entryId,
+  hasPublicUrl,
+  onRemove,
+}: {
+  entryId: string;
+  hasPublicUrl: boolean;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handle(event: MouseEvent) {
+      if (!ref.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("mousedown", handle);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", handle);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label="Ещё"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+      >
+        <MoreHorizontal size={16} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-9 z-20 w-52 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/5"
+        >
+          <MenuLink
+            href={`/lists/${entryId}/edit`}
+            onSelect={() => setOpen(false)}
+            icon={<Eye size={14} aria-hidden="true" />}
+          >
+            Открыть лист
+          </MenuLink>
+          <MenuButton
+            disabled={!hasPublicUrl}
+            onSelect={() => {
+              setOpen(false);
+              onRemove();
+            }}
+            icon={<Trash2 size={14} aria-hidden="true" />}
+            danger
+          >
+            Удалить лист
+          </MenuButton>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MenuLink({
+  href,
+  onSelect,
+  icon,
+  children,
+}: {
+  href: string;
+  onSelect: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      role="menuitem"
+      onClick={onSelect}
+      className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-950"
+    >
+      {icon}
+      {children}
+    </Link>
+  );
+}
+
+function MenuButton({
+  onSelect,
+  icon,
+  children,
+  danger,
+  disabled,
+}: {
+  onSelect: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  danger?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onSelect}
+      disabled={disabled}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        danger
+          ? "text-rose-700 hover:bg-rose-50"
+          : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
+  );
 }
 
 function readScopeListIndex(): ScopeListIndexEntry[] {

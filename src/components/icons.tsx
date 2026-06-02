@@ -13,6 +13,7 @@ export { default as ClipboardList } from "lucide-react/dist/esm/icons/clipboard-
 export { default as Copy } from "lucide-react/dist/esm/icons/copy.mjs";
 export { default as Download } from "lucide-react/dist/esm/icons/download.mjs";
 export { default as Eye } from "lucide-react/dist/esm/icons/eye.mjs";
+export { default as FilePenLine } from "lucide-react/dist/esm/icons/file-pen-line.mjs";
 export { default as FileSignature } from "lucide-react/dist/esm/icons/file-signature.mjs";
 export { default as FileText } from "lucide-react/dist/esm/icons/file-text.mjs";
 export { default as FileUp } from "lucide-react/dist/esm/icons/file-up.mjs";
@@ -21,6 +22,7 @@ export { default as Layers3 } from "lucide-react/dist/esm/icons/layers-3.mjs";
 export { default as Link2 } from "lucide-react/dist/esm/icons/link-2.mjs";
 export { default as Moon } from "lucide-react/dist/esm/icons/moon.mjs";
 export { default as MessageSquareText } from "lucide-react/dist/esm/icons/message-square-text.mjs";
+export { default as MoreHorizontal } from "lucide-react/dist/esm/icons/more-horizontal.mjs";
 export { default as Pencil } from "lucide-react/dist/esm/icons/pencil.mjs";
 export { default as Plus } from "lucide-react/dist/esm/icons/plus.mjs";
 export { default as Printer } from "lucide-react/dist/esm/icons/printer.mjs";
