@@ -76,14 +76,16 @@ export function ProjectSettingsForm({
             label="Ссылка для согласования"
             type="url"
             value={value.approvalUrl}
-            helper="Откроется при нажатии клиентом на кнопку «Согласовать»."
+            placeholder="https://calendly.com/your-team/30min"
+            helper="Откроется при клике клиента по «Согласовать». Примеры: https://calendly.com/…, https://t.me/your_team, https://wa.me/79991234567, mailto:hello@isty.ist, tel:+74951234567."
             onChange={(approvalUrl) => onChange({ approvalUrl })}
           />
           <TextInput
             label="Ссылка для обсуждения"
             type="url"
             value={value.discussionUrl}
-            helper="Откроется при нажатии клиентом на кнопку «Обсудить»."
+            placeholder="https://t.me/your_team"
+            helper="Откроется при клике по «Обсудить». Удобно вести в Telegram, на встречу в Calendly или в групповой чат."
             onChange={(discussionUrl) => onChange({ discussionUrl })}
           />
         </div>
