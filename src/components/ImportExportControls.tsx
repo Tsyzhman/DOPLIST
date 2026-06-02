@@ -1,14 +1,9 @@
-import { Download, FileUp, Sparkles } from "@/components/icons";
+import { FileUp, Sparkles } from "@/components/icons";
 import { Button } from "@/components/Ui";
 import { useRef } from "react";
-import {
-  createScopeListAiInputExampleData,
-  exportProposalDataForJson,
-} from "@/lib/proposal";
-import type { ProposalData } from "@/lib/types";
+import { createScopeListAiInputExampleData } from "@/lib/proposal";
 
 type ImportExportControlsProps = {
-  data: ProposalData;
   onImport: (data: unknown) => void;
 };
 
@@ -24,21 +19,8 @@ function downloadJson(payload: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ImportExportControls({
-  data,
-  onImport,
-}: ImportExportControlsProps) {
+export function ImportExportControls({ onImport }: ImportExportControlsProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  function exportJson() {
-    const safeTitle =
-      data.project.projectTitle
-        .toLowerCase()
-        .replace(/[^a-zа-я0-9]+/gi, "-")
-        .replace(/^-|-$/g, "") || "scopelist";
-
-    downloadJson(exportProposalDataForJson(data), `${safeTitle}.json`);
-  }
 
   function downloadExample() {
     downloadJson(createScopeListAiInputExampleData(), "scopelist-example.json");
@@ -90,10 +72,6 @@ export function ImportExportControls({
           });
         }}
       />
-      <Button type="button" variant="ghost" onClick={exportJson}>
-        <Download size={16} aria-hidden="true" />
-        Экспорт JSON
-      </Button>
     </div>
   );
 }

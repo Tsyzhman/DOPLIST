@@ -386,7 +386,7 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ThemeToggle theme={theme} onChange={setTheme} />
-            <ImportExportControls data={data} onImport={importData} />
+            <ImportExportControls onImport={importData} />
             <Button
               type="button"
               variant="secondary"
