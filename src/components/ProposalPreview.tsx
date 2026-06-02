@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
-  FileSignature,
   Layers3,
   MessageSquareText,
   ShieldCheck,
@@ -216,16 +215,6 @@ export function ProposalPreview({
           />
         </div>
 
-        <div className="proposal-card mt-8 rounded-lg border border-zinc-200 bg-zinc-50 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
-            <FileSignature size={18} aria-hidden="true" />
-            Согласование клиента
-          </div>
-          <div className="mt-7 grid gap-5 sm:grid-cols-2">
-            <SignatureLine label="Имя / подпись клиента" />
-            <SignatureLine label="Дата" />
-          </div>
-        </div>
       </section>
     </article>
   );
@@ -428,17 +417,6 @@ function VisualAction({
       <span className="mt-4 block font-semibold text-zinc-950">{title}</span>
       <span className="mt-2 block text-sm leading-6 text-zinc-600">{copy}</span>
     </button>
-  );
-}
-
-function SignatureLine({ label }: { label: string }) {
-  return (
-    <div>
-      <div className="h-12 border-b border-zinc-300" />
-      <div className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-        {label}
-      </div>
-    </div>
   );
 }
 

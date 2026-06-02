@@ -25,9 +25,9 @@
   --ink-muted: #4f5e6b;
   --ink-soft-muted: #7a8793;
 
-  --line: #e8edf2;
-  --line-soft: #edf2f6;
-  --line-strong: #cfd6df;
+  --line: #d6dde6;
+  --line-soft: #eaeff5;
+  --line-strong: #b6c1cf;
 
   --brand-purple: #8e44ad;
   --brand-purple-strong: #6f3a8e;
@@ -38,9 +38,9 @@
   --brand-orange-soft: #fdf1e6;
 
   --color-zinc-50:  #fbfcff;
-  --color-zinc-100: #f6f8fb;
-  --color-zinc-200: #edf2f6;
-  --color-zinc-300: #e8edf2;
+  --color-zinc-100: #eef3f8;
+  --color-zinc-200: #d6dde6;
+  --color-zinc-300: #b6c1cf;
   --color-zinc-400: #7a8793;
   --color-zinc-500: #61707d;
   --color-zinc-600: #4f5e6b;
@@ -308,6 +308,33 @@ details > summary::-webkit-details-marker {
   background-color: rgba(247, 249, 252, 0.85);
   backdrop-filter: saturate(140%) blur(10px);
   -webkit-backdrop-filter: saturate(140%) blur(10px);
+}
+
+/* Dark CTA / brand surfaces use bg-zinc-900/950 + text-white in source.
+   In dark theme zinc-900/950 map to LIGHT (text purpose), so the same
+   utility on a background becomes light-on-white. Reassign these
+   utilities to the purple brand surface in dark only. */
+:root[data-theme="dark"] .bg-zinc-900,
+:root[data-theme="dark"] .bg-zinc-950 {
+  background-color: var(--brand-purple);
+  color: var(--brand-purple-on);
+}
+
+:root[data-theme="dark"] .hover\:bg-zinc-800:hover {
+  background-color: var(--brand-purple-strong);
+}
+
+:root[data-theme="dark"] .border-zinc-950 {
+  border-color: var(--brand-purple);
+}
+
+:root[data-theme="dark"] .disabled\:bg-zinc-300:disabled {
+  background-color: rgba(255, 255, 255, 0.10);
+  color: rgba(236, 240, 241, 0.55);
+}
+
+:root[data-theme="dark"] .bg-zinc-50 {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* ---------- DOPLIST compat: legacy .doplist-theme-* classes

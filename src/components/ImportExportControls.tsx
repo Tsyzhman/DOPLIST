@@ -1,4 +1,4 @@
-import { Download, FileUp, Link2, Printer, RotateCcw, Sparkles } from "@/components/icons";
+import { Download, FileUp, Link2, RotateCcw, Sparkles } from "@/components/icons";
 import { useRef } from "react";
 import { createDemoProposalData } from "@/lib/proposal";
 import type { ProposalData } from "@/lib/types";
@@ -103,14 +103,6 @@ export function ImportExportControls({
       >
         <Link2 size={16} aria-hidden="true" />
         Опубликовать ссылку
-      </button>
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800"
-      >
-        <Printer size={16} aria-hidden="true" />
-        Печать / PDF
       </button>
       <button
         type="button"

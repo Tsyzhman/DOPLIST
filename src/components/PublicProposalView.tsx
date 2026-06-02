@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, MessageSquareText, Printer } from "@/components/icons";
+import { CheckCircle2, MessageSquareText } from "@/components/icons";
 import { useEffect, useState } from "react";
 import type { ProposalData, ProposalEventType } from "@/lib/types";
 import { ProposalPreview } from "./ProposalPreview";
@@ -46,6 +46,8 @@ export function PublicProposalView({
     }
 
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
   }, [theme, themeHydrated]);
 
   function toggleOptional(id: string, selected: boolean) {
@@ -77,9 +79,7 @@ export function PublicProposalView({
   }
 
   return (
-    <div
-      className={`doplist-theme doplist-theme-${theme} min-h-screen bg-zinc-100 text-zinc-950`}
-    >
+    <div className="doplist-theme min-h-screen bg-main text-ink">
       <main className="mx-auto max-w-5xl px-4 py-6">
         <div className="no-print mb-4 flex flex-wrap justify-end gap-2">
           <ThemeToggle theme={theme} onChange={setTheme} />
@@ -104,19 +104,6 @@ export function PublicProposalView({
           >
             <MessageSquareText size={16} aria-hidden="true" />
             Обсудить
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              postPublicEvent(shareSlug, "cta_clicked", {
-                metadata: { action: "print" },
-              });
-              window.print();
-            }}
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
-          >
-            <Printer size={16} aria-hidden="true" />
-            PDF
           </button>
         </div>
 
