@@ -113,7 +113,7 @@ Current Docker shape:
 
 - `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `scopelist-web:latest`, with the `scopelist-data` Docker volume mounted at `/app/.data` for file-store public sharing fallback.
 - `archive-worker`: separate `worker` Docker target and image `scopelist-archive-worker:latest`, enabled only with `--profile worker`.
-- `scopelist-data`: named Docker volume for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used. The image creates `/app/.data` as `nextjs:nodejs` so the non-root app can write temp files safely.
+- `scopelist-data`: named Docker volume for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used. Container startup normalizes `/app/.data` ownership to `nextjs:nodejs`, then runs the Node process as `nextjs`, so existing named volumes remain writable for atomic temp-file saves.
 
 Public sharing env:
 

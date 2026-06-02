@@ -37,15 +37,18 @@ ENV HOSTNAME=0.0.0.0 \
 
 RUN addgroup -S nodejs \
   && adduser -S nextjs -G nodejs \
+  && apk add --no-cache su-exec \
   && mkdir -p /app/.data \
   && chown -R nextjs:nodejs /app/.data
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-RUN rm -rf node_modules/@img node_modules/sharp
+COPY --chown=root:root scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh \
+  && rm -rf node_modules/@img node_modules/sharp
 
-USER nextjs
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 EXPOSE 3000
 
@@ -62,13 +65,16 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 
 RUN addgroup -S nodejs \
   && adduser -S nextjs -G nodejs \
+  && apk add --no-cache su-exec \
   && mkdir -p /app/.data \
   && chown -R nextjs:nodejs /app/.data
 
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=prod-deps --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --chown=nextjs:nodejs scripts ./scripts
+COPY --chown=root:root scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
-USER nextjs
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 CMD ["node", "scripts/proposal-archive-worker.mjs"]
