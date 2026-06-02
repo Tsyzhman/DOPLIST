@@ -2,11 +2,9 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarClock,
-  CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
   Layers3,
-  MessageSquareText,
   ShieldCheck,
 } from "@/components/icons";
 import type { ReactNode } from "react";
@@ -191,31 +189,6 @@ export function ProposalPreview({
         />
       </section>
 
-      <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">
-        <SectionHeading
-          eyebrow="Согласование"
-          title="Следующий шаг"
-          copy="После выбора подходящего сценария команда фиксирует объем и готовит старт работ."
-        />
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <VisualAction
-            icon={<CheckCircle2 size={18} aria-hidden="true" />}
-            title="Согласовать полный пакет"
-            copy="Согласовать обязательные и выбранные optional-позиции."
-          />
-          <VisualAction
-            icon={<ShieldCheck size={18} aria-hidden="true" />}
-            title="Согласовать только обязательное"
-            copy="Запустить только обязательный объем."
-          />
-          <VisualAction
-            icon={<MessageSquareText size={18} aria-hidden="true" />}
-            title="Запросить обсуждение"
-            copy="Обсудить объем, приоритеты или сроки."
-          />
-        </div>
-
-      </section>
     </article>
   );
 }
@@ -393,30 +366,6 @@ function ListBlock({
         </div>
       )}
     </div>
-  );
-}
-
-function VisualAction({
-  icon,
-  title,
-  copy,
-}: {
-  icon: ReactNode;
-  title: string;
-  copy: string;
-}) {
-  return (
-    <button
-      type="button"
-      disabled
-      className="proposal-card cursor-default rounded-lg border border-zinc-200 bg-white p-4 text-left opacity-90"
-    >
-      <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-        {icon}
-      </span>
-      <span className="mt-4 block font-semibold text-zinc-950">{title}</span>
-      <span className="mt-2 block text-sm leading-6 text-zinc-600">{copy}</span>
-    </button>
   );
 }
 

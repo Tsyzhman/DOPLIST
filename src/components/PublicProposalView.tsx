@@ -80,40 +80,76 @@ export function PublicProposalView({
   }
 
   return (
-    <div className="scopelist-theme min-h-screen bg-main text-ink">
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        <div className="no-print mb-4 flex flex-wrap justify-end gap-2">
-          <ThemeToggle theme={theme} onChange={setTheme} />
-          <Button
-            type="button"
-            disabled={!approvalDestination}
-            onClick={() => {
-              handleCta("approve_scope", approvalDestination);
-            }}
-          >
-            <CheckCircle2 size={16} aria-hidden="true" />
-            Согласовать
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!discussionDestination}
-            onClick={() => {
-              handleCta("request_discussion", discussionDestination);
-            }}
-          >
-            <MessageSquareText size={16} aria-hidden="true" />
-            Обсудить
-          </Button>
-        </div>
+    <article className="scopelist-theme min-h-screen bg-main text-ink">
+      <div className="fixed bottom-5 right-5 z-40 flex flex-wrap justify-end gap-2 no-print">
+        <ThemeToggle theme={theme} onChange={setTheme} />
+      </div>
 
+      <main className="mx-auto max-w-5xl px-4 py-6">
         <ProposalPreview
           data={data}
           onToggleOptional={toggleOptional}
           readOnly={!allowPackageSelection}
         />
+
+        <section
+          id="next-step"
+          className="proposal-section mt-8 border-t border-zinc-200 px-5 py-12"
+        >
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-7 max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Следующий шаг
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold text-zinc-950">
+                Как продолжить
+              </h2>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+              <div>
+                <p className="text-lg leading-8 text-zinc-700">
+                  После выбора подходящего сценария команда фиксирует объем и
+                  готовит старт работ. Если по составу есть вопросы — нажмите
+                  «Обсудить», и мы вернёмся к деталям.
+                </p>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-5">
+                <h3 className="text-lg font-semibold">Действия</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">
+                  {approvalDestination || discussionDestination
+                    ? "Откройте подходящий сценарий — мы зафиксируем ваш выбор."
+                    : "Ссылки на согласование появятся после публикации scope-листа."}
+                </p>
+                <div className="mt-5 grid gap-2">
+                  <Button
+                    type="button"
+                    disabled={!approvalDestination}
+                    onClick={() => {
+                      handleCta("approve_scope", approvalDestination);
+                    }}
+                  >
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                    Согласовать
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!discussionDestination}
+                    onClick={() => {
+                      handleCta("request_discussion", discussionDestination);
+                    }}
+                  >
+                    <MessageSquareText size={16} aria-hidden="true" />
+                    Обсудить
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
-    </div>
+    </article>
   );
 }
 
