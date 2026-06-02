@@ -12,6 +12,35 @@ npm run build
 
 The app uses local Geist font files from `public/fonts/`, so `next build` does not depend on Google Fonts network access.
 
+## Public sharing
+
+Admin sharing publishes a server-side proposal record and copies a client link:
+
+```text
+https://domain.ru/p/<shareSlug>
+```
+
+Only the private `shareSlug` is in the URL. Proposal data stays in Supabase, or
+in `.data/proposals.json` when Supabase env is not configured.
+
+Public routes:
+
+```text
+/p/[shareSlug]
+/p/[shareSlug]/password
+/api/items/[id]/share
+/api/public/[shareSlug]/password
+/api/public-events
+```
+
+The public page checks `status`, `shareSettings.isPublished`, `expiresAt`, and
+password access before rendering. Password-protected proposals use an httpOnly
+HMAC cookie signed by `PROPOSAL_ACCESS_SECRET`. Public payloads strip
+`passwordHash`, `internalNotes`, `project.notes`, and item `internalNote`.
+
+For production Supabase, apply `supabase/schema.sql` or the latest migration in
+`supabase/migrations/` before enabling public sharing.
+
 ## Local artifacts
 
 `output/`, `screenshots/`, `.playwright-cli/`, `.data/proposals.json`, `dev-server*.log`, `.next/`, and `tsconfig.tsbuildinfo` are local development or verification artifacts. They are excluded from git and Docker, but can grow on a developer machine.
@@ -82,9 +111,16 @@ For production Supabase, apply `supabase/migrations/20260531000000_proposal_arch
 
 Current Docker shape:
 
-- `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `price-presentation-web:latest`.
+- `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `price-presentation-web:latest`, with `.data` mounted for file-store public sharing fallback.
 - `archive-worker`: separate `worker` Docker target and image `price-presentation-archive-worker:latest`, enabled only with `--profile worker`.
-- `.data`: bind mount for the worker file-store fallback and archive cron logs when Supabase is not used.
+- `.data`: bind mount for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used.
+
+Public sharing env:
+
+- `PROPOSAL_PUBLIC_ORIGIN`: canonical public origin used to copy `/p/<shareSlug>` links.
+- `PROPOSAL_ACCESS_SECRET`: secret for password-gate HMAC cookies.
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: use Supabase instead of `.data/proposals.json`.
+- `SUPABASE_EVENTS_TABLE`: optional events table override, defaults to `proposal_events`.
 
 Archive worker scheduling:
 

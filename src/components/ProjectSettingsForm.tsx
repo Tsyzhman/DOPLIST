@@ -74,6 +74,22 @@ export function ProjectSettingsForm({
           onChange={(paymentTerms) => onChange({ paymentTerms })}
         />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <TextInput
+            label="Ссылка для согласования"
+            type="url"
+            value={value.approvalUrl}
+            helper="Откроется при нажатии клиентом на кнопку «Согласовать»."
+            onChange={(approvalUrl) => onChange({ approvalUrl })}
+          />
+          <TextInput
+            label="Ссылка для обсуждения"
+            type="url"
+            value={value.discussionUrl}
+            helper="Откроется при нажатии клиентом на кнопку «Обсудить»."
+            onChange={(discussionUrl) => onChange({ discussionUrl })}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Textarea
             label="Допущения"
             value={value.assumptions}
@@ -111,10 +127,12 @@ function TextInput({
   value,
   onChange,
   type = "text",
+  helper,
 }: {
   label: string;
   value: string;
   type?: string;
+  helper?: string;
   onChange: (value: string) => void;
 }) {
   return (
@@ -127,6 +145,7 @@ function TextInput({
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
       />
+      {helper ? <span className="mt-1 block text-xs text-zinc-500">{helper}</span> : null}
     </label>
   );
 }

@@ -13,10 +13,8 @@ import {
   createDemoProposalData,
   createEmptyChangeItem,
   createId,
-  decodeProposalFromShare,
-  encodeProposalForShare,
   normalizeProposalData,
-  SHARE_HASH_PREFIX,
+  PROPOSAL_RECORD_ID_KEY,
   STORAGE_KEY,
 } from "@/lib/proposal";
 import type {
@@ -34,6 +32,7 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
   const [data, setData] = useState<ProposalData>(initialData);
   const [mode, setMode] = useState<ProposalMode>("builder");
   const [hydrated, setHydrated] = useState(false);
+  const [serverProposalId, setServerProposalId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ChangeItem | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("Загружены демо-данные");
@@ -41,20 +40,17 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
   useEffect(() => {
     let nextData: ProposalData | null = null;
     let nextNotice = "Загружены демо-данные";
-    let nextMode: ProposalMode = "builder";
+    let nextServerProposalId: string | null = null;
 
     try {
-      const hashValue = window.location.hash.replace(/^#/, "");
-      const sharedData = hashValue.startsWith(SHARE_HASH_PREFIX)
-        ? decodeProposalFromShare(hashValue)
-        : null;
       const stored = window.localStorage.getItem(STORAGE_KEY);
+      const storedRecordId = window.localStorage.getItem(PROPOSAL_RECORD_ID_KEY);
 
-      if (sharedData) {
-        nextData = sharedData;
-        nextNotice = "Открыта клиентская ссылка";
-        nextMode = "preview";
-      } else if (stored) {
+      if (storedRecordId) {
+        nextServerProposalId = storedRecordId;
+      }
+
+      if (stored) {
         const parsed = normalizeProposalData(JSON.parse(stored));
         if (parsed) {
           nextData = parsed;
@@ -69,8 +65,10 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
       if (nextData) {
         setData(nextData);
       }
+      if (nextServerProposalId) {
+        setServerProposalId(nextServerProposalId);
+      }
       setNotice(nextNotice);
-      setMode(nextMode);
       setHydrated(true);
     }, 0);
 
@@ -221,15 +219,43 @@ export function AppShellClient({ initialData }: AppShellClientProps) {
   }
 
   async function copyShareLink() {
-    const url = new URL(window.location.href);
-    url.hash = `${SHARE_HASH_PREFIX}${encodeProposalForShare(data)}`;
+    const proposalId = serverProposalId || createId();
+
+    if (!serverProposalId) {
+      setServerProposalId(proposalId);
+      window.localStorage.setItem(PROPOSAL_RECORD_ID_KEY, proposalId);
+    }
+
+    setNotice("Публикуем клиентскую ссылку");
+
+    const response = await fetch(
+      `/api/items/${encodeURIComponent(proposalId)}/share`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "publish",
+          proposal: data,
+        }),
+      },
+    );
+    const result = (await response.json().catch(() => ({}))) as {
+      publicUrl?: string;
+      error?: string;
+    };
+
+    if (!response.ok || !result.publicUrl) {
+      setNotice("Не удалось опубликовать ссылку");
+      alert(result.error || "Не удалось опубликовать клиентскую ссылку.");
+      return;
+    }
 
     try {
-      await navigator.clipboard.writeText(url.toString());
-      setNotice("Клиентская ссылка скопирована");
+      await navigator.clipboard.writeText(result.publicUrl);
+      setNotice("Публичная ссылка опубликована и скопирована");
     } catch {
-      window.prompt("Скопируйте клиентскую ссылку", url.toString());
-      setNotice("Ссылка подготовлена");
+      window.prompt("Скопируйте клиентскую ссылку", result.publicUrl);
+      setNotice("Публичная ссылка подготовлена");
     }
   }
 

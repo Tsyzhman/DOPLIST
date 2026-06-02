@@ -190,6 +190,8 @@ export type ProjectSettings = {
   currency: string;
   introSummary: string;
   paymentTerms: string;
+  approvalUrl: string;
+  discussionUrl: string;
   assumptions: string;
   outOfScope: string;
   notes: string;

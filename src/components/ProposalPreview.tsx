@@ -28,12 +28,14 @@ import { TimelineImpact } from "./TimelineImpact";
 
 type ProposalPreviewProps = {
   data: ProposalData;
-  onToggleOptional: (id: string, selected: boolean) => void;
+  onToggleOptional?: (id: string, selected: boolean) => void;
+  readOnly?: boolean;
 };
 
 export function ProposalPreview({
   data,
   onToggleOptional,
+  readOnly = false,
 }: ProposalPreviewProps) {
   const requiredItems = data.items.filter((item) => item.required);
   const optionalItems = data.items.filter((item) => item.optional);
@@ -157,7 +159,11 @@ export function ProposalPreview({
         </div>
       </section>
 
-      <PricingBreakdown data={data} onToggleOptional={onToggleOptional} />
+      <PricingBreakdown
+        data={data}
+        onToggleOptional={onToggleOptional}
+        readOnly={readOnly}
+      />
       <TimelineImpact data={data} />
 
       <section className="proposal-section border-t border-zinc-200 px-6 py-10 sm:px-10">

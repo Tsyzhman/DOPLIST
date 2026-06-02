@@ -12,6 +12,7 @@ import type {
 } from "./types";
 
 export const STORAGE_KEY = "change-proposal-builder-v1";
+export const PROPOSAL_RECORD_ID_KEY = "change-proposal-record-id-v1";
 export const SHARE_HASH_PREFIX = "proposal=";
 
 export const categories: Category[] = [
@@ -149,6 +150,8 @@ export function createDemoProposalData(): ProposalData {
         "Ниже собран понятный пакет корректировок после ревью: обязательные работы для сохранения качества релиза и опциональные улучшения, которые можно подключить к текущей итерации.",
       paymentTerms:
         "50% предоплата перед стартом работ, 50% после приемки. Срочные итерации оплачиваются до начала выполнения.",
+      approvalUrl: "",
+      discussionUrl: "",
       assumptions:
         "Клиент предоставляет финальные тексты и материалы до старта итерации.\nСостав страниц и ключевые сценарии не меняются без отдельной оценки.\nДоступы к CRM и тестовым окружениям предоставляются в течение 1 рабочего дня.\nОдна consolidated-волна комментариев входит в указанную оценку.",
       outOfScope:
@@ -360,6 +363,17 @@ export function decodeProposalFromShare(value: string) {
   }
 
   return normalizeProposalData(JSON.parse(decompressed));
+}
+
+export function buildPublicProposalUrl(origin: string, shareSlug: string) {
+  const baseUrl = origin || "http://localhost:3000";
+  const url = new URL(baseUrl);
+
+  url.pathname = `/p/${shareSlug}`;
+  url.search = "";
+  url.hash = "";
+
+  return url.toString();
 }
 
 export function normalizeProposalData(value: unknown): ProposalData | null {

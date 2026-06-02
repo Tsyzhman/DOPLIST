@@ -12,12 +12,14 @@ import type { ChangeItem, ProposalData } from "@/lib/types";
 
 type PricingBreakdownProps = {
   data: ProposalData;
-  onToggleOptional: (id: string, selected: boolean) => void;
+  onToggleOptional?: (id: string, selected: boolean) => void;
+  readOnly?: boolean;
 };
 
 export function PricingBreakdown({
   data,
   onToggleOptional,
+  readOnly = false,
 }: PricingBreakdownProps) {
   const currency = data.project.currency;
   const requiredSubtotal = calculateRequiredSubtotal(data.items);
@@ -52,6 +54,7 @@ export function PricingBreakdown({
                 item={item}
                 currency={currency}
                 onToggleOptional={onToggleOptional}
+                readOnly={readOnly}
               />
             ))}
           </tbody>
@@ -88,10 +91,12 @@ function PricingRow({
   item,
   currency,
   onToggleOptional,
+  readOnly,
 }: {
   item: ChangeItem;
   currency: string;
-  onToggleOptional: (id: string, selected: boolean) => void;
+  onToggleOptional?: (id: string, selected: boolean) => void;
+  readOnly: boolean;
 }) {
   const included = item.required || item.selected;
 
@@ -99,7 +104,7 @@ function PricingRow({
     <tr className={included ? "text-zinc-800" : "text-zinc-400"}>
       <td className="px-4 py-3 align-top">
         <div className="flex items-start gap-3">
-          {item.optional ? (
+          {item.optional && !readOnly && onToggleOptional ? (
             <label className="no-print mt-0.5 inline-flex cursor-pointer items-center">
               <input
                 type="checkbox"
@@ -112,7 +117,11 @@ function PricingRow({
             </label>
           ) : (
             <span className="mt-0.5 text-zinc-900">
-              <CheckSquare size={16} aria-hidden="true" />
+              {included ? (
+                <CheckSquare size={16} aria-hidden="true" />
+              ) : (
+                <Square size={16} aria-hidden="true" />
+              )}
             </span>
           )}
           <div>

@@ -84,7 +84,7 @@ export function ImportExportControls({
         className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 shadow-sm transition hover:bg-emerald-100"
       >
         <Link2 size={16} aria-hidden="true" />
-        Копировать ссылку
+        Опубликовать ссылку
       </button>
       <button
         type="button"

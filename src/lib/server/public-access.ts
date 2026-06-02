@@ -1,11 +1,16 @@
-import { createHmac } from "crypto";
-import type { Proposal } from "@/lib/types";
+import { createHmac, timingSafeEqual } from "crypto";
+
+type AccessControlledProposal = {
+  shareSlug: string;
+  isPasswordProtected?: boolean;
+  passwordHash?: string;
+};
 
 export function getProposalAccessCookieName(shareSlug: string) {
   return `doplist_access_${shareSlug}`;
 }
 
-export function createProposalAccessToken(proposal: Proposal) {
+export function createProposalAccessToken(proposal: AccessControlledProposal) {
   const secret = process.env.PROPOSAL_ACCESS_SECRET || "doplist-dev-secret";
   const hashBasis = proposal.passwordHash || "no-password";
 
@@ -14,10 +19,20 @@ export function createProposalAccessToken(proposal: Proposal) {
     .digest("hex");
 }
 
-export function hasProposalAccess(proposal: Proposal, cookieValue?: string) {
+export function hasProposalAccess(
+  proposal: AccessControlledProposal,
+  cookieValue?: string,
+) {
   if (!proposal.isPasswordProtected) {
     return true;
   }
 
-  return cookieValue === createProposalAccessToken(proposal);
+  if (!cookieValue) {
+    return false;
+  }
+
+  const expected = Buffer.from(createProposalAccessToken(proposal), "hex");
+  const actual = Buffer.from(cookieValue, "hex");
+
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
