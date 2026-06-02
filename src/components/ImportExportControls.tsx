@@ -62,7 +62,7 @@ export function ImportExportControls({
     <div className="top-controls flex flex-wrap items-center gap-2">
       <Button
         type="button"
-        variant="secondary"
+        variant="ghost"
         onClick={downloadExample}
         title="Скачать пример структуры, чтобы заполнить с помощью AI"
       >

@@ -6,7 +6,6 @@ import {
   Copy,
   Eye,
   Hammer,
-  Layers3,
   Link2,
   Save,
 } from "@/components/icons";
@@ -364,19 +363,17 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
     <div className="scopelist-theme min-h-screen bg-main text-ink">
       <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-              <Layers3 size={18} aria-hidden="true" />
-            </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+              aria-label="Назад к списку"
+              title="Назад к списку"
+            >
+              <ArrowLeft size={18} aria-hidden="true" />
+            </Link>
             <div>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-600 transition hover:text-zinc-950"
-              >
-                <ArrowLeft size={16} aria-hidden="true" />
-                Назад к списку
-              </Link>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge className={publicationTone}>{publicationLabel}</Badge>
                 <span className="text-sm text-zinc-500">
                   Версия {data.project.version || "v1.0"}
