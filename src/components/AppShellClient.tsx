@@ -316,7 +316,7 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
   }
 
   return (
-    <div className="scopelist-theme min-h-screen bg-main text-ink">
+    <main className="scopelist-theme min-h-screen bg-zinc-50 text-zinc-900">
       <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
@@ -373,7 +373,7 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
       </header>
 
       {mode === "builder" ? (
-        <main className="builder-grid relative z-10 mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="builder-grid relative z-10 mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="builder-panel space-y-5">
             <ProjectSettingsForm value={data.project} onChange={updateProject} />
             <ChangeItemList
@@ -399,13 +399,13 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
             />
             <SummaryCard data={data} compact />
           </aside>
-        </main>
+        </div>
       ) : (
-        <main className="mx-auto max-w-5xl px-4 py-6">
+        <div className="mx-auto max-w-5xl px-4 py-6">
           <ProposalPreview data={data} onToggleOptional={toggleOptionalSelected} />
-        </main>
+        </div>
       )}
-    </div>
+    </main>
   );
 }
 
