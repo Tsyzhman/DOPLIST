@@ -440,9 +440,25 @@ function resolveStoreFilePath() {
   return path.join(process.cwd(), ".data", "proposals.json");
 }
 
+// Matches PRISMA: 14 chars from alphanumeric alphabet only, no -/_,
+// so links read as kp.tsyzhman.ru/p/39GNQa1qlQRKlf rather than the
+// 24-char base64url that base64 of 18 random bytes produces.
+const SHARE_SLUG_ALPHABET =
+  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const SHARE_SLUG_LENGTH = 14;
+
+function generateShareSlug() {
+  const bytes = randomBytes(SHARE_SLUG_LENGTH);
+  let out = "";
+  for (let index = 0; index < bytes.length; index += 1) {
+    out += SHARE_SLUG_ALPHABET[bytes[index] % SHARE_SLUG_ALPHABET.length];
+  }
+  return out;
+}
+
 async function createUniqueShareSlug(store: ProposalStore, proposalId: string) {
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const shareSlug = randomBytes(18).toString("base64url");
+    const shareSlug = generateShareSlug();
     const existing = await store.getByShareSlug(shareSlug);
 
     if (!existing || existing.id === proposalId) {
