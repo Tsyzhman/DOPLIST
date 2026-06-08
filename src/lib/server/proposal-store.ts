@@ -9,17 +9,21 @@ import fs from "fs/promises";
 import path from "path";
 import {
   buildPublicProposalUrl,
+  calculateItemTotal,
   createDefaultProposalData,
   normalizeProposalData,
   toList,
 } from "@/lib/proposal";
 import type {
   ChangeItem,
+  ProcessStep,
   Proposal,
   ProposalData,
   ProposalEvent,
   ProposalEventType,
+  ProposalPackage,
   ProposalStatus,
+  ProofItem,
   ShareAccessMode,
   ShareSettings,
 } from "@/lib/types";
@@ -139,7 +143,13 @@ export async function publishProposal(
     language: "ru",
     currency: input.proposal.project.currency || "RUB",
     shortIntro: input.proposal.project.introSummary,
+    clientContext: input.proposal.project.clientContext,
+    clientProblem: input.proposal.project.clientProblem,
+    businessGoal: input.proposal.project.businessGoal,
+    proposedSolutionSummary: input.proposal.project.proposedSolutionSummary,
+    whyUs: input.proposal.project.whyUs,
     paymentTerms: input.proposal.project.paymentTerms,
+    nextStepText: input.proposal.project.nextStepText,
     internalNotes: input.proposal.project.notes,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
@@ -159,6 +169,9 @@ export async function publishProposal(
     },
     assumptions: toList(input.proposal.project.assumptions),
     outOfScope: toList(input.proposal.project.outOfScope),
+    packages: proposalDataToPackages(input.proposal),
+    processSteps: listToProcessSteps(toList(input.proposal.project.processSteps)),
+    proofItems: listToProofItems(toList(input.proposal.project.proofItems)),
     proposalData: input.proposal,
   });
 
@@ -313,6 +326,7 @@ export function proposalToProposalData(proposal: PublicProposal): ProposalData {
           unit: "fixed",
           estimatedDays: parseDurationDays(item.duration),
           priority: item.isRecommended ? "high" : "medium",
+          scopePhase: "launch",
           required: false,
           optional: true,
           selected,
@@ -336,6 +350,7 @@ export function proposalToProposalData(proposal: PublicProposal): ProposalData {
         unit: "fixed",
         estimatedDays: 0,
         priority: "medium",
+        scopePhase: "launch",
         required: true,
         optional: false,
         selected: true,
@@ -353,11 +368,30 @@ export function proposalToProposalData(proposal: PublicProposal): ProposalData {
       proposalDate: proposal.proposalDate || base.project.proposalDate,
       version: proposal.version || base.project.version,
       currency: proposal.currency || "RUB",
+      proposalArchetype: packages.length
+        ? "packages"
+        : base.project.proposalArchetype,
       introSummary:
         proposal.shortIntro ||
         proposal.proposedSolutionSummary ||
         base.project.introSummary,
+      clientContext: proposal.clientContext || base.project.clientContext,
+      clientProblem: proposal.clientProblem || base.project.clientProblem,
+      businessGoal: proposal.businessGoal || base.project.businessGoal,
+      proposedSolutionSummary:
+        proposal.proposedSolutionSummary ||
+        proposal.shortIntro ||
+        base.project.proposedSolutionSummary,
+      whyUs: proposal.whyUs || base.project.whyUs,
+      processSteps: processStepsToList(
+        readArray<ProcessStep>(proposal, "processSteps"),
+      ).join("\n"),
+      proofItems: proofItemsToList(
+        readArray<ProofItem>(proposal, "proofItems"),
+      ).join("\n"),
       paymentTerms: proposal.paymentTerms || "",
+      nextStepText: proposal.nextStepText || base.project.nextStepText,
+      openQuestions: base.project.openQuestions,
       assumptions: readArray<string>(proposal, "assumptions").join("\n"),
       outOfScope: readArray<string>(proposal, "outOfScope").join("\n"),
       notes: "",
@@ -446,6 +480,7 @@ function resolveStoreFilePath() {
 const SHARE_SLUG_ALPHABET =
   "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const SHARE_SLUG_LENGTH = 14;
+const fileStoreWriteQueues = new Map<string, Promise<void>>();
 
 function generateShareSlug() {
   const bytes = randomBytes(SHARE_SLUG_LENGTH);
@@ -487,18 +522,20 @@ class FileProposalStore implements ProposalStore {
   }
 
   async upsert(proposal: StoredProposal) {
-    const data = await this.load();
-    const normalized = normalizeStoredProposal(proposal);
-    const index = data.proposals.findIndex((item) => item.id === normalized.id);
+    return this.withWriteLock(async () => {
+      const data = await this.load();
+      const normalized = normalizeStoredProposal(proposal);
+      const index = data.proposals.findIndex((item) => item.id === normalized.id);
 
-    if (index === -1) {
-      data.proposals.unshift(normalized);
-    } else {
-      data.proposals[index] = normalized;
-    }
+      if (index === -1) {
+        data.proposals.unshift(normalized);
+      } else {
+        data.proposals[index] = normalized;
+      }
 
-    await this.save(data);
-    return normalized;
+      await this.save(data);
+      return normalized;
+    });
   }
 
   async recordEvent(
@@ -506,37 +543,39 @@ class FileProposalStore implements ProposalStore {
     eventType: ProposalEventType,
     input?: ProposalEventInput,
   ) {
-    const data = await this.load();
-    const now = new Date().toISOString();
-    const event: ProposalEvent = {
-      id: randomUUID(),
-      proposalId: proposal.id,
-      eventType,
-      packageId: input?.packageId,
-      metadata: input?.metadata,
-      userAgent: input?.userAgent,
-      referrer: input?.referrer,
-      createdAt: now,
-    };
+    return this.withWriteLock(async () => {
+      const data = await this.load();
+      const now = new Date().toISOString();
+      const event: ProposalEvent = {
+        id: randomUUID(),
+        proposalId: proposal.id,
+        eventType,
+        packageId: input?.packageId,
+        metadata: input?.metadata,
+        userAgent: input?.userAgent,
+        referrer: input?.referrer,
+        createdAt: now,
+      };
 
-    data.events.unshift(event);
+      data.events.unshift(event);
 
-    if (eventType === "view") {
-      const index = data.proposals.findIndex((item) => item.id === proposal.id);
+      if (eventType === "view") {
+        const index = data.proposals.findIndex((item) => item.id === proposal.id);
 
-      if (index !== -1) {
-        const current = normalizeStoredProposal(data.proposals[index]);
-        data.proposals[index] = {
-          ...current,
-          viewsCount: Number(current.viewsCount || 0) + 1,
-          lastViewedAt: now,
-          updatedAt: now,
-        };
+        if (index !== -1) {
+          const current = normalizeStoredProposal(data.proposals[index]);
+          data.proposals[index] = {
+            ...current,
+            viewsCount: Number(current.viewsCount || 0) + 1,
+            lastViewedAt: now,
+            updatedAt: now,
+          };
+        }
       }
-    }
 
-    await this.save(data);
-    return event;
+      await this.save(data);
+      return event;
+    });
   }
 
   private async load(): Promise<ProposalStoreData> {
@@ -563,9 +602,40 @@ class FileProposalStore implements ProposalStore {
 
   private async save(data: ProposalStoreData) {
     await fs.mkdir(path.dirname(this.filePath), { recursive: true });
-    const temporaryPath = `${this.filePath}.${process.pid}.tmp`;
-    await fs.writeFile(temporaryPath, `${JSON.stringify(data, null, 2)}\n`);
-    await fs.rename(temporaryPath, this.filePath);
+    const temporaryPath = `${this.filePath}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`;
+
+    try {
+      await fs.writeFile(temporaryPath, `${JSON.stringify(data, null, 2)}\n`);
+      await fs.rename(temporaryPath, this.filePath);
+    } catch (error) {
+      await fs.rm(temporaryPath, { force: true }).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  private async withWriteLock<T>(operation: () => Promise<T>) {
+    const previous = fileStoreWriteQueues.get(this.filePath) || Promise.resolve();
+    let release: () => void = () => undefined;
+    const next = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const queued = previous.catch(() => undefined).then(() => next);
+
+    fileStoreWriteQueues.set(this.filePath, queued);
+    await previous.catch(() => undefined);
+
+    try {
+      return await operation();
+    } finally {
+      release();
+      queued
+        .finally(() => {
+          if (fileStoreWriteQueues.get(this.filePath) === queued) {
+            fileStoreWriteQueues.delete(this.filePath);
+          }
+        })
+        .catch(() => undefined);
+    }
   }
 }
 
@@ -816,6 +886,129 @@ function stripInternalProposalData(data: ProposalData): ProposalData {
       internalNote: "",
     })),
   };
+}
+
+function listToProcessSteps(items: string[]): ProcessStep[] {
+  return items.map((item, index) => ({
+    id: `process-${index + 1}`,
+    title: item,
+    description: "",
+    duration: "",
+    sortOrder: index,
+  }));
+}
+
+function listToProofItems(items: string[]): ProofItem[] {
+  return items.map((item, index) => ({
+    id: `proof-${index + 1}`,
+    title: item,
+    description: "",
+    result: "",
+    sortOrder: index,
+  }));
+}
+
+function proposalDataToPackages(data: ProposalData): ProposalPackage[] {
+  if (data.project.proposalArchetype === "line_items") {
+    return [];
+  }
+
+  const requiredItems = data.items.filter((item) => item.required);
+  const launchRequiredItems = requiredItems.filter(
+    (item) => item.scopePhase === "launch",
+  );
+  const optionalItems = data.items.filter((item) => item.optional);
+  const selectedOptionalItems = optionalItems.filter((item) => item.selected);
+  const launchOptionalItems = optionalItems.filter(
+    (item) => item.scopePhase === "launch",
+  );
+  const coreItems = launchRequiredItems.length
+    ? launchRequiredItems
+    : requiredItems;
+  const recommendedOptionalItems = selectedOptionalItems.length
+    ? selectedOptionalItems
+    : launchOptionalItems;
+  const recommendedItems = uniqueChangeItems([
+    ...requiredItems,
+    ...recommendedOptionalItems,
+  ]);
+  const fullItems = uniqueChangeItems([...requiredItems, ...optionalItems]);
+
+  return [
+    buildPackage("launch-core", "Первый запуск", coreItems, false, 0),
+    buildPackage(
+      "recommended-scope",
+      "Оптимальный запуск",
+      recommendedItems.length ? recommendedItems : coreItems,
+      true,
+      1,
+    ),
+    buildPackage(
+      "full-roadmap",
+      "Запуск + дорожная карта",
+      fullItems.length ? fullItems : recommendedItems,
+      false,
+      2,
+    ),
+  ];
+}
+
+function buildPackage(
+  id: string,
+  name: string,
+  items: ChangeItem[],
+  isRecommended: boolean,
+  sortOrder: number,
+): ProposalPackage {
+  const durationDays = items.reduce(
+    (sum, item) => sum + Math.max(0, item.estimatedDays),
+    0,
+  );
+  const features = items
+    .map((item) => item.title.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  return {
+    id,
+    name,
+    description: isRecommended
+      ? "Обязательный объем и выбранные опции для ближайшей итерации."
+      : "Сценарий собран из текущих позиций scope-листа.",
+    price: items.reduce((sum, item) => sum + calculateItemTotal(item), 0),
+    duration: durationDays ? `${durationDays} раб. дн.` : "",
+    isRecommended,
+    features,
+    sortOrder,
+  };
+}
+
+function uniqueChangeItems(items: ChangeItem[]) {
+  const seen = new Set<string>();
+  const result: ChangeItem[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.id)) {
+      continue;
+    }
+
+    seen.add(item.id);
+    result.push(item);
+  }
+
+  return result;
+}
+
+function processStepsToList(items: ProcessStep[]) {
+  return sortByOrder(items)
+    .map((item) => [item.title, item.description, item.duration].filter(Boolean).join(" — "))
+    .filter(Boolean);
+}
+
+function proofItemsToList(items: ProofItem[]) {
+  return sortByOrder(items)
+    .map((item) => [item.title, item.description, item.result].filter(Boolean).join(" — "))
+    .filter(Boolean);
 }
 
 function parseExpiryDate(value: string) {

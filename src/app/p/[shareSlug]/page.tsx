@@ -61,6 +61,7 @@ export default async function PublicProposalPage({
       allowPackageSelection={
         publicProposal.shareSettings?.allowPackageSelection !== false
       }
+      shareSettings={publicProposal.shareSettings}
     />
   );
 }

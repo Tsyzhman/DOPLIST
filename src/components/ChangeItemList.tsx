@@ -9,6 +9,8 @@ import {
   fromList,
   priorities,
   priorityLabels,
+  scopePhaseLabels,
+  scopePhases,
   statuses,
   statusLabels,
   toList,
@@ -19,6 +21,7 @@ import type {
   Category,
   ChangeItem,
   Priority,
+  ScopePhase,
   Status,
   Unit,
 } from "@/lib/types";
@@ -208,7 +211,7 @@ function ChangeItemEditCard({
         />
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
         <SelectInput
           label="Приоритет"
           value={item.priority}
@@ -216,6 +219,17 @@ function ChangeItemEditCard({
           getLabel={(priority) => priorityLabels[priority as Priority]}
           onChange={(priority) =>
             onUpdate({ priority: priority as Priority })
+          }
+        />
+        <SelectInput
+          label="Фаза"
+          value={item.scopePhase}
+          options={scopePhases}
+          getLabel={(scopePhase) =>
+            scopePhaseLabels[scopePhase as ScopePhase]
+          }
+          onChange={(scopePhase) =>
+            onUpdate({ scopePhase: scopePhase as ScopePhase })
           }
         />
         <SelectInput

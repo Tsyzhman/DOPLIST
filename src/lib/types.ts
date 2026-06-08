@@ -183,6 +183,10 @@ export type Unit = "fixed" | "hour" | "day" | "item";
 
 export type ChangeItemType = "required" | "optional";
 
+export type ScopePhase = "launch" | "roadmap";
+
+export type ProposalArchetype = "line_items" | "packages" | "comparison";
+
 export type EstimateConfidence = "low" | "medium" | "high";
 
 export type EstimateSource =
@@ -198,10 +202,20 @@ export type ProjectSettings = {
   proposalDate: string;
   version: string;
   currency: string;
+  proposalArchetype: ProposalArchetype;
   introSummary: string;
+  clientContext: string;
+  clientProblem: string;
+  businessGoal: string;
+  proposedSolutionSummary: string;
+  whyUs: string;
+  processSteps: string;
+  proofItems: string;
   paymentTerms: string;
+  nextStepText: string;
   approvalUrl: string;
   discussionUrl: string;
+  openQuestions: string;
   assumptions: string;
   outOfScope: string;
   notes: string;
@@ -220,6 +234,7 @@ export type ChangeItem = {
   unit: Unit;
   estimatedDays: number;
   priority: Priority;
+  scopePhase: ScopePhase;
   required: boolean;
   optional: boolean;
   selected: boolean;
@@ -252,10 +267,17 @@ export type ScopeListIndexEntry = {
 
 export type ScopeListJsonProject = Omit<
   ProjectSettings,
-  "assumptions" | "outOfScope"
+  | "assumptions"
+  | "outOfScope"
+  | "processSteps"
+  | "proofItems"
+  | "openQuestions"
 > & {
   assumptions: string[];
   outOfScope: string[];
+  processSteps: string[];
+  proofItems: string[];
+  openQuestions: string[];
 };
 
 export type ScopeListJsonPricing = {
@@ -289,6 +311,7 @@ export type ScopeListJsonItem = {
   type: ChangeItemType;
   status: Status;
   priority: Priority;
+  scopePhase: ScopePhase;
   description: string;
   clientValue: string;
   deliverables: string[];

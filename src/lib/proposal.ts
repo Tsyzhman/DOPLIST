@@ -12,7 +12,9 @@ import type {
   EstimateConfidence,
   EstimateSource,
   Priority,
+  ProposalArchetype,
   ProposalData,
+  ScopePhase,
   ScopeListIndexEntry,
   Status,
   Unit,
@@ -42,6 +44,12 @@ export const priorities: Priority[] = ["low", "medium", "high"];
 export const statuses: Status[] = ["draft", "proposed", "approved", "rejected"];
 export const units: Unit[] = ["fixed", "hour", "day", "item"];
 export const itemTypes: ChangeItemType[] = ["required", "optional"];
+export const scopePhases: ScopePhase[] = ["launch", "roadmap"];
+export const proposalArchetypes: ProposalArchetype[] = [
+  "line_items",
+  "packages",
+  "comparison",
+];
 export const estimateSources: EstimateSource[] = [
   "ai_estimate",
   "user_confirmed",
@@ -76,6 +84,17 @@ export const statusLabels: Record<Status, string> = {
   proposed: "Предложено",
   approved: "Согласовано",
   rejected: "Отклонено",
+};
+
+export const scopePhaseLabels: Record<ScopePhase, string> = {
+  launch: "Первый запуск",
+  roadmap: "Дорожная карта",
+};
+
+export const proposalArchetypeLabels: Record<ProposalArchetype, string> = {
+  line_items: "Смета по позициям",
+  packages: "Пакеты / тарифы",
+  comparison: "Сравнение вариантов",
 };
 
 export const unitLabels: Record<Unit, string> = {
@@ -129,10 +148,20 @@ function createScopeListJsonSchema({
           "proposalDate",
           "version",
           "currency",
+          "proposalArchetype",
           "introSummary",
+          "clientContext",
+          "clientProblem",
+          "businessGoal",
+          "proposedSolutionSummary",
+          "whyUs",
+          "processSteps",
+          "proofItems",
           "paymentTerms",
+          "nextStepText",
           "approvalUrl",
           "discussionUrl",
+          "openQuestions",
           "assumptions",
           "outOfScope",
           "notes",
@@ -144,10 +173,29 @@ function createScopeListJsonSchema({
           proposalDate: { type: "string", format: "date" },
           version: { type: "string" },
           currency: { type: "string", minLength: 3, maxLength: 3 },
+          proposalArchetype: { enum: proposalArchetypes },
           introSummary: { type: "string" },
+          clientContext: { type: "string" },
+          clientProblem: { type: "string" },
+          businessGoal: { type: "string" },
+          proposedSolutionSummary: { type: "string" },
+          whyUs: { type: "string" },
+          processSteps: {
+            type: "array",
+            items: { type: "string" },
+          },
+          proofItems: {
+            type: "array",
+            items: { type: "string" },
+          },
           paymentTerms: { type: "string" },
+          nextStepText: { type: "string" },
           approvalUrl: { type: "string" },
           discussionUrl: { type: "string" },
+          openQuestions: {
+            type: "array",
+            items: { type: "string" },
+          },
           assumptions: {
             type: "array",
             items: { type: "string" },
@@ -182,6 +230,7 @@ function createScopeListItemJsonSchema(
       "type",
       "status",
       "priority",
+      "scopePhase",
       "description",
       "clientValue",
       "deliverables",
@@ -198,6 +247,7 @@ function createScopeListItemJsonSchema(
       type: { enum: itemTypes },
       status: { enum: statuses },
       priority: { enum: priorities },
+      scopePhase: { enum: scopePhases },
       description: { type: "string" },
       clientValue: { type: "string" },
       deliverables: {
@@ -342,6 +392,7 @@ export function createEmptyChangeItem(): ChangeItem {
     unit: "fixed",
     estimatedDays: 0,
     priority: "medium",
+    scopePhase: "launch",
     required: true,
     optional: false,
     selected: true,
@@ -360,10 +411,20 @@ export function createDefaultProposalData(): ProposalData {
       proposalDate: new Date().toISOString().slice(0, 10),
       version: "v1.0",
       currency: "RUB",
+      proposalArchetype: "line_items",
       introSummary: "",
+      clientContext: "",
+      clientProblem: "",
+      businessGoal: "",
+      proposedSolutionSummary: "",
+      whyUs: "",
+      processSteps: "",
+      proofItems: "",
       paymentTerms: "",
+      nextStepText: "",
       approvalUrl: "",
       discussionUrl: "",
+      openQuestions: "",
       assumptions: "",
       outOfScope: "",
       notes: "",
@@ -381,12 +442,31 @@ export function createExampleProposalData(): ProposalData {
       proposalDate: new Date().toISOString().slice(0, 10),
       version: "v1.0",
       currency: "RUB",
+      proposalArchetype: "comparison",
       introSummary:
         "Ниже собран понятный пакет корректировок после ревью: обязательные работы для сохранения качества релиза и опциональные улучшения, которые можно подключить к текущей итерации.",
+      clientContext:
+        "После клиентского ревью важно быстро отделить обязательные правки от улучшений, которые можно подключать по бюджету и дедлайну.",
+      clientProblem:
+        "Без единого scope-листа правки смешиваются с идеями на будущее: растет риск спорного объема, пересогласований и сдвига релиза.",
+      businessGoal:
+        "Зафиксировать прозрачный объем, бюджет и сроки ближайшей итерации, чтобы команда могла стартовать без лишних уточнений.",
+      proposedSolutionSummary:
+        "Собираем корректировки в управляемый пакет: обязательный контур для релиза, опции по приоритету и понятные границы работ.",
+      whyUs:
+        "Мы раскладываем изменения на проверяемые позиции, показываем влияние каждой опции на бюджет и сроки, а спорные места оставляем в допущениях вместо скрытых обещаний.",
+      processSteps:
+        "Фиксация финального списка правок и доступов\nВыполнение обязательного контура\nПодключение выбранных опций\nQA-прогон и передача результата",
+      proofItems:
+        "Scope-лист разделяет обязательный объем и опции до старта работ\nКаждая позиция содержит ценность, бюджет, сроки и границы\nПубличная ссылка фиксирует актуальную версию предложения",
       paymentTerms:
         "50% предоплата перед стартом работ, 50% после приемки. Срочные итерации оплачиваются до начала выполнения.",
+      nextStepText:
+        "Выберите опции, которые хотите включить в ближайшую итерацию, и отправьте подтверждение. После этого мы фиксируем состав работ и стартовый слот команды.",
       approvalUrl: "",
       discussionUrl: "",
+      openQuestions:
+        "Нужно ли включать дополнительный адаптив в первый запуск или оставить его после релиза?\nЕсть ли фиксированная дата презентации, под которую нужно зарезервировать срочный слот?",
       assumptions:
         "Клиент предоставляет финальные тексты и материалы до старта итерации.\nСостав страниц и ключевые сценарии не меняются без отдельной оценки.\nДоступы к CRM и тестовым окружениям предоставляются в течение 1 рабочего дня.\nОдна consolidated-волна комментариев входит в указанную оценку.",
       outOfScope:
@@ -481,6 +561,7 @@ export function createExampleProposalData(): ProposalData {
         required: false,
         optional: true,
         selected: false,
+        scopePhase: "roadmap",
         internalNote: "Не переборщить с motion на слабых устройствах.",
       }),
       makeExampleItem({
@@ -529,6 +610,7 @@ export function createExampleProposalData(): ProposalData {
         required: false,
         optional: true,
         selected: false,
+        scopePhase: "roadmap",
         dependencyNote:
           "Работает только при быстром согласовании и доступности материалов.",
         internalNote: "Перед включением проверить загрузку команды.",
@@ -575,6 +657,7 @@ export function createExampleProposalData(): ProposalData {
         required: false,
         optional: true,
         selected: false,
+        scopePhase: "roadmap",
         dependencyNote:
           "Нужны тексты, изображения и подтвержденные цифры результата.",
         internalNote: "Проверить, есть ли лимит на CMS entries.",
@@ -619,10 +702,20 @@ function toScopeListProposalJson(
       proposalDate: data.project.proposalDate,
       version: data.project.version,
       currency: data.project.currency || "RUB",
+      proposalArchetype: data.project.proposalArchetype || "line_items",
       introSummary: data.project.introSummary,
+      clientContext: data.project.clientContext,
+      clientProblem: data.project.clientProblem,
+      businessGoal: data.project.businessGoal,
+      proposedSolutionSummary: data.project.proposedSolutionSummary,
+      whyUs: data.project.whyUs,
+      processSteps: toList(data.project.processSteps),
+      proofItems: toList(data.project.proofItems),
       paymentTerms: data.project.paymentTerms,
+      nextStepText: data.project.nextStepText,
       approvalUrl: data.project.approvalUrl,
       discussionUrl: data.project.discussionUrl,
+      openQuestions: toList(data.project.openQuestions),
       assumptions: toList(data.project.assumptions),
       outOfScope: toList(data.project.outOfScope),
       notes: data.project.notes,
@@ -657,6 +750,7 @@ function toScopeListItemJson(
     type,
     status: item.status,
     priority: item.priority,
+    scopePhase: item.scopePhase,
     description: item.description,
     clientValue: item.clientValue,
     deliverables: item.deliverables,
@@ -764,10 +858,20 @@ function validateScopeListJsonData(
         "proposalDate",
         "version",
         "currency",
+        "proposalArchetype",
         "introSummary",
+        "clientContext",
+        "clientProblem",
+        "businessGoal",
+        "proposedSolutionSummary",
+        "whyUs",
+        "processSteps",
+        "proofItems",
         "paymentTerms",
+        "nextStepText",
         "approvalUrl",
         "discussionUrl",
+        "openQuestions",
         "assumptions",
         "outOfScope",
         "notes",
@@ -784,10 +888,20 @@ function validateScopeListJsonData(
         "proposalDate",
         "version",
         "currency",
+        "proposalArchetype",
         "introSummary",
+        "clientContext",
+        "clientProblem",
+        "businessGoal",
+        "proposedSolutionSummary",
+        "whyUs",
+        "processSteps",
+        "proofItems",
         "paymentTerms",
+        "nextStepText",
         "approvalUrl",
         "discussionUrl",
+        "openQuestions",
         "assumptions",
         "outOfScope",
         "notes",
@@ -796,6 +910,15 @@ function validateScopeListJsonData(
     );
     validateStringList(value.project.assumptions, "project.assumptions", errors);
     validateStringList(value.project.outOfScope, "project.outOfScope", errors);
+    validateStringList(value.project.processSteps, "project.processSteps", errors);
+    validateStringList(value.project.proofItems, "project.proofItems", errors);
+    validateStringList(value.project.openQuestions, "project.openQuestions", errors);
+    validateEnum(
+      value.project.proposalArchetype,
+      proposalArchetypes,
+      "project.proposalArchetype",
+      errors,
+    );
   }
 
   if (!Array.isArray(value.items)) {
@@ -838,6 +961,7 @@ function validateScopeListJsonItem(
     "type",
     "status",
     "priority",
+    "scopePhase",
     "description",
     "clientValue",
     "deliverables",
@@ -858,6 +982,7 @@ function validateScopeListJsonItem(
       "type",
       "status",
       "priority",
+      "scopePhase",
       "description",
       "clientValue",
       "deliverables",
@@ -873,6 +998,7 @@ function validateScopeListJsonItem(
   validateEnum(item.type, itemTypes, `${path}.type`, errors);
   validateEnum(item.status, statuses, `${path}.status`, errors);
   validateEnum(item.priority, priorities, `${path}.priority`, errors);
+  validateEnum(item.scopePhase, scopePhases, `${path}.scopePhase`, errors);
   validateStringList(item.deliverables, `${path}.deliverables`, errors);
   validateStringList(item.outOfScope, `${path}.outOfScope`, errors);
   validatePricing(item.pricing, `${path}.pricing`, errors);
@@ -984,10 +1110,33 @@ function normalizeProjectSettings(value: unknown): ProposalData["project"] {
     proposalDate: readStringValue(source.proposalDate, base.proposalDate),
     version: readStringValue(source.version, base.version),
     currency: readStringValue(source.currency, base.currency).toUpperCase() || "RUB",
+    proposalArchetype: normalizeEnum(
+      source.proposalArchetype,
+      proposalArchetypes,
+      base.proposalArchetype,
+    ),
     introSummary: readStringValue(source.introSummary, base.introSummary),
+    clientContext: readStringValue(source.clientContext, base.clientContext),
+    clientProblem: readStringValue(source.clientProblem, base.clientProblem),
+    businessGoal: readStringValue(source.businessGoal, base.businessGoal),
+    proposedSolutionSummary: readStringValue(
+      source.proposedSolutionSummary,
+      base.proposedSolutionSummary,
+    ),
+    whyUs: readStringValue(source.whyUs, base.whyUs),
+    processSteps: fromList(
+      readStringList(source.processSteps, toList(base.processSteps)),
+    ),
+    proofItems: fromList(
+      readStringList(source.proofItems, toList(base.proofItems)),
+    ),
     paymentTerms: readStringValue(source.paymentTerms, base.paymentTerms),
+    nextStepText: readStringValue(source.nextStepText, base.nextStepText),
     approvalUrl: readStringValue(source.approvalUrl, base.approvalUrl),
     discussionUrl: readStringValue(source.discussionUrl, base.discussionUrl),
+    openQuestions: fromList(
+      readStringList(source.openQuestions, toList(base.openQuestions)),
+    ),
     assumptions: fromList(readStringList(source.assumptions, toList(base.assumptions))),
     outOfScope: fromList(readStringList(source.outOfScope, toList(base.outOfScope))),
     notes: readStringValue(source.notes, base.notes),
@@ -1032,6 +1181,7 @@ function normalizeChangeItem(value: unknown): ChangeItem {
       ),
     ),
     priority: normalizeEnum(source.priority, priorities, "medium"),
+    scopePhase: normalizeEnum(source.scopePhase, scopePhases, "launch"),
     required,
     optional: type === "optional",
     selected,
@@ -1188,12 +1338,24 @@ function emptyToNull(value: string) {
 function makeExampleItem(
   item: Omit<
     ChangeItem,
-    "quantity" | "unit" | "status" | "priority" | "dependencyNote" | "internalNote"
+    | "quantity"
+    | "unit"
+    | "status"
+    | "priority"
+    | "scopePhase"
+    | "dependencyNote"
+    | "internalNote"
   > &
     Partial<
       Pick<
         ChangeItem,
-        "quantity" | "unit" | "status" | "priority" | "dependencyNote" | "internalNote"
+        | "quantity"
+        | "unit"
+        | "status"
+        | "priority"
+        | "scopePhase"
+        | "dependencyNote"
+        | "internalNote"
       >
     >,
 ): ChangeItem {
@@ -1202,6 +1364,7 @@ function makeExampleItem(
     unit: "fixed",
     status: "proposed",
     priority: "medium",
+    scopePhase: "launch",
     dependencyNote: "",
     internalNote: "",
     ...item,

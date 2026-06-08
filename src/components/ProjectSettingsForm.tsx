@@ -1,5 +1,6 @@
 import { FileText } from "@/components/icons";
 import { SectionCard, TextInput, Textarea } from "@/components/Ui";
+import { proposalArchetypeLabels, proposalArchetypes } from "@/lib/proposal";
 import type { ProjectSettings } from "@/lib/types";
 
 type ProjectSettingsFormProps = {
@@ -40,6 +41,20 @@ export function ProjectSettingsForm({
           value={value.currency}
           onChange={(currency) => onChange({ currency: currency.toUpperCase() })}
         />
+        <SelectInput
+          label="Архетип КП"
+          value={value.proposalArchetype}
+          options={proposalArchetypes.map((archetype) => ({
+            value: archetype,
+            label: proposalArchetypeLabels[archetype],
+          }))}
+          onChange={(proposalArchetype) =>
+            onChange({
+              proposalArchetype:
+                proposalArchetype as ProjectSettings["proposalArchetype"],
+            })
+          }
+        />
       </div>
 
       <div className="mt-4">
@@ -48,6 +63,70 @@ export function ProjectSettingsForm({
           value={value.introSummary}
           rows={4}
           onChange={(introSummary) => onChange({ introSummary })}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Textarea
+          label="Контекст клиента"
+          value={value.clientContext}
+          rows={4}
+          onChange={(clientContext) => onChange({ clientContext })}
+        />
+        <Textarea
+          label="Боль / почему сейчас"
+          value={value.clientProblem}
+          rows={4}
+          onChange={(clientProblem) => onChange({ clientProblem })}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Textarea
+          label="Бизнес-цель"
+          value={value.businessGoal}
+          rows={4}
+          onChange={(businessGoal) => onChange({ businessGoal })}
+        />
+        <Textarea
+          label="Предлагаемое решение"
+          value={value.proposedSolutionSummary}
+          rows={4}
+          onChange={(proposedSolutionSummary) =>
+            onChange({ proposedSolutionSummary })
+          }
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Textarea
+          label="Процесс / этапы"
+          value={value.processSteps}
+          rows={5}
+          helper="Каждый этап с новой строки."
+          onChange={(processSteps) => onChange({ processSteps })}
+        />
+        <Textarea
+          label="Кейсы / доказательства"
+          value={value.proofItems}
+          rows={5}
+          helper="Каждый факт или доказательство с новой строки."
+          onChange={(proofItems) => onChange({ proofItems })}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Textarea
+          label="Почему мы"
+          value={value.whyUs}
+          rows={4}
+          onChange={(whyUs) => onChange({ whyUs })}
+        />
+        <Textarea
+          label="Следующий шаг"
+          value={value.nextStepText}
+          rows={4}
+          onChange={(nextStepText) => onChange({ nextStepText })}
         />
       </div>
 
@@ -98,6 +177,16 @@ export function ProjectSettingsForm({
 
       <div className="mt-4">
         <Textarea
+          label="Открытые вопросы"
+          value={value.openQuestions}
+          rows={4}
+          helper="Каждый вопрос с новой строки. Используйте для неопределенности, которую нельзя честно закрыть без клиента."
+          onChange={(openQuestions) => onChange({ openQuestions })}
+        />
+      </div>
+
+      <div className="mt-4">
+        <Textarea
           label="Заметки"
           value={value.notes}
           rows={3}
@@ -111,5 +200,35 @@ export function ProjectSettingsForm({
         Все изменения сохраняются в localStorage этого браузера.
       </div>
     </SectionCard>
+  );
+}
+
+function SelectInput({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block min-w-0">
+      <span className="text-sm font-medium text-zinc-700">{label}</span>
+      <select
+        aria-label={label}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

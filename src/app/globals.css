@@ -36,6 +36,10 @@
   --brand-orange: #e67e22;
   --brand-orange-strong: #b86617;
   --brand-orange-soft: #fdf1e6;
+  --main: #020b14;
+  --accent: #8e44ad;
+  --stepM: #8e44ad;
+  --stepA: #e67e22;
 
   --color-zinc-50:  #fbfcff;
   --color-zinc-100: #eef3f8;
@@ -122,6 +126,10 @@
   --brand-orange: #e67e22;
   --brand-orange-strong: #ff9b4d;
   --brand-orange-soft: rgba(230, 126, 34, 0.18);
+  --main: #020b14;
+  --accent: #8e44ad;
+  --stepM: #8e44ad;
+  --stepA: #e67e22;
 
   --color-zinc-50:  rgba(255, 255, 255, 0.04);
   --color-zinc-100: rgba(255, 255, 255, 0.06);
@@ -191,9 +199,13 @@
   --color-accent-soft: var(--brand-purple-soft);
   --color-accent-strong: var(--brand-purple-strong);
   --color-accent-on: var(--brand-purple-on);
+  --color-brand-main: var(--main);
+  --color-brand-accent: var(--accent);
   --color-step: var(--brand-orange);
   --color-step-soft: var(--brand-orange-soft);
   --color-step-strong: var(--brand-orange-strong);
+  --color-step-m: var(--stepM);
+  --color-step-a: var(--stepA);
   --color-ink: var(--ink);
   --color-ink-strong: var(--ink-strong);
   --color-ink-soft: var(--ink-soft);
@@ -362,6 +374,41 @@ details > summary::-webkit-details-marker {
   transition:
     background-color 200ms ease,
     color 200ms ease;
+}
+
+.client-proposal-shell {
+  background: var(--surface-bg);
+  color: var(--ink);
+}
+
+.client-proposal-shell .proposal-section {
+  border-color: var(--line-soft);
+}
+
+.client-proposal-shell .proposal-card {
+  box-shadow: var(--shadow-card);
+}
+
+.isty-glass-card {
+  background: var(--surface-panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+}
+
+:root[data-theme="dark"] .client-proposal-shell {
+  background:
+    linear-gradient(145deg, rgba(142, 68, 173, 0.12), transparent 36rem),
+    linear-gradient(28deg, rgba(230, 126, 34, 0.10), transparent 34rem),
+    var(--surface-bg);
+}
+
+:root[data-theme="dark"] .client-proposal-shell .proposal-card,
+:root[data-theme="dark"] .isty-glass-card {
+  background-color: var(--surface-panel);
+  border-color: var(--line);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: saturate(135%) blur(14px);
+  -webkit-backdrop-filter: saturate(135%) blur(14px);
 }
 
 @media print {

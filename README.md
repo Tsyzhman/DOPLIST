@@ -10,7 +10,7 @@ npm run lint
 npm run build
 ```
 
-The app uses local Geist font files from `public/fonts/`, so `next build` does not depend on Google Fonts network access.
+The app uses local Onest and Geist font files from `public/fonts/`, so `next build` does not depend on Google Fonts network access.
 
 ## Public sharing
 
@@ -114,6 +114,8 @@ Current Docker shape:
 - `web`: Next.js standalone app on `APP_PORT` (`3004` by default), image `scopelist-web:latest`, with the `scopelist-data` Docker volume mounted at `/app/.data` for file-store public sharing fallback.
 - `archive-worker`: separate `worker` Docker target and image `scopelist-archive-worker:latest`, enabled only with `--profile worker`.
 - `scopelist-data`: named Docker volume for file-store proposals/events, archive worker fallback, and archive cron logs when Supabase is not used. Container startup normalizes `/app/.data` ownership to `nextjs:nodejs`, then runs the Node process as `nextjs`, so existing named volumes remain writable for atomic temp-file saves.
+- File-store writes use a unique temporary file per save before atomic rename, so concurrent public view/event writes do not collide on the same temp path.
+- Published package/comparison archetypes persist derived `packages` alongside `proposalData` in file-store and Supabase rows; no additional table or volume is required.
 
 Public sharing env:
 
@@ -139,5 +141,6 @@ Sizing guidance for a compact production deployment:
 - CPU: `0.5 vCPU` for web; the one-shot archive worker may briefly add up to `0.2 vCPU`.
 - RAM: `0.4-0.8 GB` for web; worker memory is transient and capped at `192 MB`.
 - Disk: `2-5 GB` for the optimized web/worker images plus the `scopelist-data` volume.
+- Build output: fonts are bundled from `public/fonts/`; production builds do not fetch Google Fonts.
 
 If SCOPELIST starts receiving heavier production traffic, raise web `mem_limit` to `1g` and remove or increase `NODE_OPTIONS=--max-old-space-size`.

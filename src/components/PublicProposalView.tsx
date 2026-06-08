@@ -3,7 +3,7 @@
 import { CheckCircle2, MessageSquareText } from "@/components/icons";
 import { Button } from "@/components/Ui";
 import { useEffect, useState } from "react";
-import type { ProposalData, ProposalEventType } from "@/lib/types";
+import type { ProposalData, ProposalEventType, ShareSettings } from "@/lib/types";
 import { ProposalPreview } from "./ProposalPreview";
 import {
   THEME_STORAGE_KEY,
@@ -15,18 +15,25 @@ type PublicProposalViewProps = {
   data: ProposalData;
   shareSlug: string;
   allowPackageSelection: boolean;
+  shareSettings?: Partial<
+    Pick<ShareSettings, "showPrices" | "showTimeline" | "showComparisonTable">
+  >;
 };
 
 export function PublicProposalView({
   data: initialData,
   shareSlug,
   allowPackageSelection,
+  shareSettings,
 }: PublicProposalViewProps) {
   const [data, setData] = useState(initialData);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [themeHydrated, setThemeHydrated] = useState(false);
   const approvalDestination = normalizeCtaUrl(data.project.approvalUrl);
   const discussionDestination = normalizeCtaUrl(data.project.discussionUrl);
+  const nextStepText =
+    data.project.nextStepText ||
+    "После выбора подходящего сценария команда фиксирует объем и готовит старт работ. Если по составу есть вопросы — нажмите «Обсудить», и мы вернёмся к деталям.";
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -69,6 +76,20 @@ export function PublicProposalView({
     });
   }
 
+  function handlePackageSelect(packageId: string) {
+    if (!allowPackageSelection) {
+      return;
+    }
+
+    postPublicEvent(shareSlug, "package_selected", {
+      packageId,
+      metadata: {
+        archetype: data.project.proposalArchetype,
+        selected: true,
+      },
+    });
+  }
+
   function handleCta(action: string, destination: string) {
     postPublicEvent(shareSlug, "cta_clicked", {
       metadata: { action, destination: destination || null },
@@ -80,7 +101,7 @@ export function PublicProposalView({
   }
 
   return (
-    <article className="scopelist-theme min-h-screen bg-paper text-zinc-950">
+    <article className="scopelist-theme client-proposal-shell min-h-screen bg-paper text-zinc-950">
       <div className="fixed bottom-5 right-5 z-40 flex flex-wrap justify-end gap-2 no-print">
         <ThemeToggle theme={theme} onChange={setTheme} />
       </div>
@@ -88,7 +109,9 @@ export function PublicProposalView({
       <ProposalPreview
         data={data}
         onToggleOptional={toggleOptional}
+        onPackageSelect={handlePackageSelect}
         readOnly={!allowPackageSelection}
+        shareSettings={shareSettings}
         boxed={false}
       />
 
@@ -109,9 +132,7 @@ export function PublicProposalView({
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
             <div>
               <p className="text-lg leading-8 text-zinc-700">
-                После выбора подходящего сценария команда фиксирует объем и
-                готовит старт работ. Если по составу есть вопросы — нажмите
-                «Обсудить», и мы вернёмся к деталям.
+                {nextStepText}
               </p>
             </div>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-5">

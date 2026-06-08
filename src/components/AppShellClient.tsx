@@ -274,9 +274,9 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
       setPublishedUrl(result.publicUrl);
       setNotice("Публичная ссылка опубликована и скопирована");
     } catch {
-      window.prompt("Скопируйте клиентскую ссылку", result.publicUrl);
       setPublishedUrl(result.publicUrl);
       setNotice("Публичная ссылка подготовлена");
+      showCopyPrompt(result.publicUrl);
     }
   }
 
@@ -301,8 +301,8 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
       await navigator.clipboard.writeText(publicUrl);
       setNotice("Клиентская ссылка скопирована");
     } catch {
-      window.prompt("Скопируйте клиентскую ссылку", publicUrl);
       setNotice("Клиентская ссылка подготовлена");
+      showCopyPrompt(publicUrl);
     }
   }
 
@@ -407,6 +407,15 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
       )}
     </main>
   );
+}
+
+function showCopyPrompt(value: string) {
+  try {
+    window.prompt("Скопируйте клиентскую ссылку", value);
+  } catch {
+    // Some automated or embedded browsers disable prompt(); the URL is still
+    // rendered in the publication card after state updates above.
+  }
 }
 
 function normalizeItem(item: ChangeItem): ChangeItem {
