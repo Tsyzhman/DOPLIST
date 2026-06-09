@@ -18,7 +18,7 @@ export default function NewScopeListPage() {
   return (
     <main className="scopelist-theme flex min-h-screen items-center justify-center bg-main px-4 text-ink">
       <p className="text-sm font-semibold text-zinc-600">
-        Создаём новый scope-лист
+        Создаём новое КП на допработы
       </p>
     </main>
   );

@@ -10,8 +10,24 @@ export function getProposalAccessCookieName(shareSlug: string) {
   return `scopelist_access_${shareSlug}`;
 }
 
+function getAccessSecret() {
+  const secret = process.env.PROPOSAL_ACCESS_SECRET;
+
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "PROPOSAL_ACCESS_SECRET is required in production for proposal access tokens",
+    );
+  }
+
+  return "scopelist-dev-secret";
+}
+
 export function createProposalAccessToken(proposal: AccessControlledProposal) {
-  const secret = process.env.PROPOSAL_ACCESS_SECRET || "scopelist-dev-secret";
+  const secret = getAccessSecret();
   const hashBasis = proposal.passwordHash || "no-password";
 
   return createHmac("sha256", secret)

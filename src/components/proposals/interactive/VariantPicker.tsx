@@ -128,7 +128,7 @@ export function VariantPicker({
                 </ul>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-zinc-500">
-                  Позиции появятся после заполнения scope.
+                  Позиции появятся после заполнения допработ.
                 </p>
               )}
             </div>

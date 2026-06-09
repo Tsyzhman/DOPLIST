@@ -4,6 +4,7 @@ import {
   isProposalEventType,
   recordProposalEvent,
 } from "@/lib/server/proposal-store";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 
 type PublicEventBody = {
   shareSlug?: string;
@@ -19,6 +20,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid event payload" }, { status: 400 });
   }
 
+  const limit = checkRateLimit(`evt:${body.shareSlug}`, 60, 60_000);
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: {
+          "retry-after": String(Math.ceil(limit.retryAfterMs / 1000)),
+        },
+      },
+    );
+  }
+
   const proposal = await getPublishedProposalByShareSlug(body.shareSlug);
 
   if (!proposal) {
@@ -26,11 +41,27 @@ export async function POST(request: Request) {
   }
 
   await recordProposalEvent(proposal, body.eventType, {
-    metadata: body.metadata,
+    metadata: clampMetadata(body.metadata),
     packageId: body.packageId,
-    userAgent: request.headers.get("user-agent") || undefined,
-    referrer: request.headers.get("referer") || undefined,
+    userAgent: clampString(request.headers.get("user-agent") || undefined, 512),
+    referrer: clampString(request.headers.get("referer") || undefined, 1024),
   });
 
   return NextResponse.json({ ok: true });
+}
+
+function clampString(value: string | undefined, max: number) {
+  return value ? value.slice(0, max) : undefined;
+}
+
+function clampMetadata(metadata: Record<string, unknown> | undefined) {
+  if (!metadata) {
+    return undefined;
+  }
+
+  try {
+    return JSON.stringify(metadata).length <= 4096 ? metadata : undefined;
+  } catch {
+    return undefined;
+  }
 }

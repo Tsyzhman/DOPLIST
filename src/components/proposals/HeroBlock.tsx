@@ -44,15 +44,15 @@ export function HeroBlock({ data, showPrices, showTimeline }: HeroBlockProps) {
             Подготовлено для {data.project.clientName || "клиента"}
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-6xl">
-            {data.project.projectTitle || "Scope-лист корректировок"}
+            {data.project.projectTitle || "КП на дополнительные работы"}
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
             {getProposalPromise(data)}
           </p>
           <p className="mt-5 inline-flex max-w-full flex-wrap gap-x-3 gap-y-1 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
+            <span>Расширяем текущий проект</span>
+            <span>Показываем эффект</span>
             <span>Фиксируем объем</span>
-            <span>Прозрачные сроки</span>
-            <span>Без скрытых работ</span>
           </p>
         </div>
         <div className="self-end rounded-lg border border-zinc-200 bg-zinc-50 p-5">

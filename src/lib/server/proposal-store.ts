@@ -2,18 +2,27 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   randomBytes,
   randomUUID,
+  scrypt as scryptCallback,
   scryptSync,
   timingSafeEqual,
 } from "crypto";
 import fs from "fs/promises";
 import path from "path";
+import { promisify } from "util";
 import {
   buildPublicProposalUrl,
   calculateItemTotal,
   createDefaultProposalData,
   normalizeProposalData,
   toList,
-} from "@/lib/proposal";
+} from "../proposal.ts";
+import {
+  asRecord,
+  readArray,
+  readNumber,
+  readString,
+  readValue,
+} from "../shared/record.ts";
 import type {
   ChangeItem,
   ProcessStep,
@@ -26,7 +35,7 @@ import type {
   ProofItem,
   ShareAccessMode,
   ShareSettings,
-} from "@/lib/types";
+} from "../types.ts";
 
 export type StoredProposal = Partial<Proposal> & {
   id: string;
@@ -79,6 +88,9 @@ type ProposalStore = {
 };
 
 const DEFAULT_PUBLIC_DAYS = 30;
+const MAX_STORED_EVENTS = 5000;
+const SUPPORTED_CURRENCY = "RUB" as const;
+const scrypt = promisify(scryptCallback);
 const EVENT_TYPES: ProposalEventType[] = [
   "view",
   "package_selected",
@@ -127,30 +139,70 @@ export async function publishProposal(
       ? existing?.passwordHash
       : undefined;
 
-  const record = normalizeStoredProposal({
+  const record = buildPublishedRecord({
+    id,
+    input,
+    existing,
+    shareSlug,
+    expiresAt,
+    accessMode,
+    passwordHash,
+    now,
+  });
+
+  const saved = await store.upsert(record);
+
+  return {
+    proposal: sanitizeProposalForPublic(saved),
+    publicUrl: buildPublicProposalUrl(input.origin, saved.shareSlug),
+  };
+}
+
+function buildPublishedRecord({
+  id,
+  input,
+  existing,
+  shareSlug,
+  expiresAt,
+  accessMode,
+  passwordHash,
+  now,
+}: {
+  id: string;
+  input: PublishProposalInput;
+  existing: StoredProposal | null;
+  shareSlug: string;
+  expiresAt: string;
+  accessMode: ShareAccessMode;
+  passwordHash?: string;
+  now: string;
+}) {
+  const project = input.proposal.project;
+
+  return normalizeStoredProposal({
     ...existing,
     id,
     shareSlug,
-    title: input.proposal.project.projectTitle,
-    clientName: input.proposal.project.clientName,
-    clientCompany: input.proposal.project.clientName,
-    preparedBy: input.proposal.project.preparedBy,
+    title: project.projectTitle,
+    clientName: project.clientName,
+    clientCompany: project.clientName,
+    preparedBy: project.preparedBy,
     preparedByRole: existing?.preparedByRole || "",
-    proposalDate: input.proposal.project.proposalDate,
+    proposalDate: project.proposalDate,
     validUntil: expiresAt,
-    version: input.proposal.project.version,
+    version: project.version,
     status: "published",
     language: "ru",
-    currency: input.proposal.project.currency || "RUB",
-    shortIntro: input.proposal.project.introSummary,
-    clientContext: input.proposal.project.clientContext,
-    clientProblem: input.proposal.project.clientProblem,
-    businessGoal: input.proposal.project.businessGoal,
-    proposedSolutionSummary: input.proposal.project.proposedSolutionSummary,
-    whyUs: input.proposal.project.whyUs,
-    paymentTerms: input.proposal.project.paymentTerms,
-    nextStepText: input.proposal.project.nextStepText,
-    internalNotes: input.proposal.project.notes,
+    currency: project.currency || "RUB",
+    shortIntro: project.introSummary,
+    clientContext: project.clientContext,
+    clientProblem: project.clientProblem,
+    businessGoal: project.businessGoal,
+    proposedSolutionSummary: project.proposedSolutionSummary,
+    whyUs: project.whyUs,
+    paymentTerms: project.paymentTerms,
+    nextStepText: project.nextStepText,
+    internalNotes: project.notes,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     publishedAt: now,
@@ -167,20 +219,13 @@ export async function publishProposal(
       expiresAt,
       noIndex: true,
     },
-    assumptions: toList(input.proposal.project.assumptions),
-    outOfScope: toList(input.proposal.project.outOfScope),
+    assumptions: toList(project.assumptions),
+    outOfScope: toList(project.outOfScope),
     packages: proposalDataToPackages(input.proposal),
-    processSteps: listToProcessSteps(toList(input.proposal.project.processSteps)),
-    proofItems: listToProofItems(toList(input.proposal.project.proofItems)),
+    processSteps: listToProcessSteps(toList(project.processSteps)),
+    proofItems: listToProofItems(toList(project.proofItems)),
     proposalData: input.proposal,
   });
-
-  const saved = await store.upsert(record);
-
-  return {
-    proposal: sanitizeProposalForPublic(saved),
-    publicUrl: buildPublicProposalUrl(input.origin, saved.shareSlug),
-  };
 }
 
 export async function unpublishProposal(
@@ -307,57 +352,9 @@ export function proposalToProposalData(proposal: PublicProposal): ProposalData {
   );
   const selectedPackageId = readString(proposal, "selectedPackageId");
   const base = createDefaultProposalData();
-  const items: ChangeItem[] = packages.length
-    ? packages.map((item, index) => {
-        const selected = selectedPackageId
-          ? item.id === selectedPackageId
-          : Boolean(item.isRecommended) || index === 0;
-
-        return {
-          id: item.id || randomUUID(),
-          title: item.name || "Package",
-          category: "Other",
-          description: item.description || "",
-          clientValue: item.features?.join("\n") || "",
-          deliverables: item.features || [],
-          outOfScope: [],
-          price: Math.max(0, Number(item.price) || 0),
-          quantity: 1,
-          unit: "fixed",
-          estimatedDays: parseDurationDays(item.duration),
-          priority: item.isRecommended ? "high" : "medium",
-          scopePhase: "launch",
-          required: false,
-          optional: true,
-          selected,
-          status: "proposed",
-          dependencyNote: "",
-          internalNote: "",
-        };
-      })
-    : deliverables.map((item) => ({
-        id: item.id || randomUUID(),
-        title: item.title || "Deliverable",
-        category: "Other",
-        description: item.description || "",
-        clientValue: item.clientValue || "",
-        deliverables: [item.description, item.clientValue].filter(
-          (value): value is string => Boolean(value),
-        ),
-        outOfScope: [],
-        price: 0,
-        quantity: 1,
-        unit: "fixed",
-        estimatedDays: 0,
-        priority: "medium",
-        scopePhase: "launch",
-        required: true,
-        optional: false,
-        selected: true,
-        status: "proposed",
-        dependencyNote: "",
-        internalNote: "",
-      }));
+  const items = packages.length
+    ? storedPackagesToChangeItems(packages, selectedPackageId)
+    : storedDeliverablesToChangeItems(deliverables);
 
   return {
     project: {
@@ -400,6 +397,67 @@ export function proposalToProposalData(proposal: PublicProposal): ProposalData {
   };
 }
 
+function storedPackagesToChangeItems(
+  packages: StoredPackage[],
+  selectedPackageId: string,
+): ChangeItem[] {
+  return packages.map((item, index) => {
+    const selected = selectedPackageId
+      ? item.id === selectedPackageId
+      : Boolean(item.isRecommended) || index === 0;
+
+    return {
+      id: item.id || randomUUID(),
+      title: item.name || "Package",
+      category: "Other",
+      description: item.description || "",
+      clientValue: item.features?.join("\n") || "",
+      deliverables: item.features || [],
+      outOfScope: [],
+      price: Math.max(0, Number(item.price) || 0),
+      quantity: 1,
+      unit: "fixed",
+      estimatedDays: parseDurationDays(item.duration),
+      priority: item.isRecommended ? "high" : "medium",
+      scopePhase: "launch",
+      required: false,
+      optional: true,
+      selected,
+      status: "proposed",
+      dependencyNote: "",
+      internalNote: "",
+    };
+  });
+}
+
+function storedDeliverablesToChangeItems(
+  deliverables: StoredDeliverable[],
+): ChangeItem[] {
+  return deliverables.map((item) => ({
+    id: item.id || randomUUID(),
+    title: item.title || "Deliverable",
+    category: "Other",
+    description: item.description || "",
+    clientValue: item.clientValue || "",
+    deliverables: [item.description, item.clientValue].filter(
+      (value): value is string => Boolean(value),
+    ),
+    outOfScope: [],
+    price: 0,
+    quantity: 1,
+    unit: "fixed",
+    estimatedDays: 0,
+    priority: "medium",
+    scopePhase: "launch",
+    required: true,
+    optional: false,
+    selected: true,
+    status: "proposed",
+    dependencyNote: "",
+    internalNote: "",
+  }));
+}
+
 export function isProposalPublished(proposal: StoredProposal) {
   return (
     proposal.status === "published" &&
@@ -425,7 +483,10 @@ export function hashProposalPassword(password: string) {
   return `scrypt:${salt}:${hash}`;
 }
 
-export function verifyProposalPassword(passwordHash: string | undefined, password: string) {
+export async function verifyProposalPassword(
+  passwordHash: string | undefined,
+  password: string,
+) {
   if (!passwordHash || !password) {
     return false;
   }
@@ -436,7 +497,7 @@ export function verifyProposalPassword(passwordHash: string | undefined, passwor
     return false;
   }
 
-  const actualBuffer = scryptSync(password, salt, 32);
+  const actualBuffer = (await scrypt(password, salt, 32)) as Buffer;
   const expectedBuffer = Buffer.from(expected, "base64url");
 
   return (
@@ -558,6 +619,10 @@ class FileProposalStore implements ProposalStore {
       };
 
       data.events.unshift(event);
+
+      if (data.events.length > MAX_STORED_EVENTS) {
+        data.events.length = MAX_STORED_EVENTS;
+      }
 
       if (eventType === "view") {
         const index = data.proposals.findIndex((item) => item.id === proposal.id);
@@ -721,14 +786,24 @@ class SupabaseProposalStore implements ProposalStore {
     }
 
     if (eventType === "view") {
-      await this.client
-        .from(this.proposalsTable)
-        .update({
-          views_count: Number(proposal.viewsCount || 0) + 1,
-          last_viewed_at: now,
-          updated_at: now,
-        })
-        .eq("id", proposal.id);
+      const { error: rpcError } = await this.client.rpc(
+        "increment_proposal_views",
+        {
+          target_proposal_id: proposal.id,
+          viewed_at_value: now,
+        },
+      );
+
+      if (rpcError) {
+        await this.client
+          .from(this.proposalsTable)
+          .update({
+            views_count: Number(proposal.viewsCount || 0) + 1,
+            last_viewed_at: now,
+            updated_at: now,
+          })
+          .eq("id", proposal.id);
+      }
     }
 
     return normalizeProposalEvent(data);
@@ -765,7 +840,7 @@ function normalizeStoredProposal(source: unknown): StoredProposal {
     version: readString(row, "version") || "v1.0",
     status: normalizeStatus(readString(row, "status")),
     language: "ru",
-    currency: normalizeCurrency(readString(row, "currency")),
+    currency: normalizeCurrency(),
     shortIntro: readString(row, "shortIntro"),
     clientContext: readString(row, "clientContext"),
     clientProblem: readString(row, "clientProblem"),
@@ -1058,38 +1133,8 @@ function normalizeStatus(value: string): ProposalStatus {
     : "draft";
 }
 
-function normalizeCurrency(value: string): "RUB" {
-  return value === "RUB" ? "RUB" : "RUB";
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object"
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function readValue(source: Record<string, unknown>, camelName: string) {
-  return source[camelName] ?? source[toSnakeCase(camelName)];
-}
-
-function readString(source: unknown, camelName: string) {
-  const value = readValue(asRecord(source), camelName);
-  return typeof value === "string" ? value : "";
-}
-
-function readNumber(source: unknown, camelName: string) {
-  const value = readValue(asRecord(source), camelName);
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
-}
-
-function readArray<T>(source: unknown, camelName: string): T[] {
-  const value = readValue(asRecord(source), camelName);
-  return Array.isArray(value) ? (value as T[]) : [];
-}
-
-function toSnakeCase(value: string) {
-  return value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+function normalizeCurrency(): typeof SUPPORTED_CURRENCY {
+  return SUPPORTED_CURRENCY;
 }
 
 function stripJsonBom(value: string) {

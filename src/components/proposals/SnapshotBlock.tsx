@@ -26,12 +26,12 @@ export function SnapshotBlock({
       <div className="mx-auto max-w-6xl">
         <SectionHeading
           eyebrow="Быстрые факты"
-          title="Что фиксируем до старта"
+          title="Что фиксируем перед допработами"
           copy={getProposalHeroCopy(data)}
         />
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <SnapshotCard
-            label="Обязательный контур"
+            label="Ближайший контур"
             value={`${requiredItems.length} поз.`}
           />
           <SnapshotCard label="Опции" value={`${optionalItems.length} поз.`} />

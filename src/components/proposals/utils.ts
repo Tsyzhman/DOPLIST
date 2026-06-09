@@ -38,7 +38,7 @@ export function getProposalPromise(data: ProposalData) {
   return (
     data.project.proposedSolutionSummary ||
     data.project.introSummary ||
-    "Фиксируем понятный объем работ, бюджет, сроки и границы до старта."
+    "Фиксируем понятный объем допработ, бюджет, сроки и границы перед стартом итерации."
   );
 }
 
@@ -46,6 +46,6 @@ export function getProposalHeroCopy(data: ProposalData) {
   return (
     data.project.businessGoal ||
     data.project.introSummary ||
-    "SCOPELIST помогает отделить обязательный контур от опций и быстрее согласовать ближайшую итерацию."
+    "SCOPELIST помогает отделить ближайший контур допработ от опций и быстрее согласовать следующую итерацию."
   );
 }

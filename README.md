@@ -28,15 +28,23 @@ Public routes:
 ```text
 /p/[shareSlug]
 /p/[shareSlug]/password
-/api/items/[id]/share
 /api/public/[shareSlug]/password
 /api/public-events
 ```
+
+Admin routes such as `/api/items/[id]/share` should be behind Caddy
+`basic_auth` in production. Optionally set `ADMIN_ACCESS_TOKEN` for direct
+server/CLI calls; when present, the app requires the `x-scopelist-admin-token`
+header on `/api/items/*/share`. This token must not be embedded in client-side
+browser code.
 
 The public page checks `status`, `shareSettings.isPublished`, `expiresAt`, and
 password access before rendering. Password-protected proposals use an httpOnly
 HMAC cookie signed by `PROPOSAL_ACCESS_SECRET`. Public payloads strip
 `passwordHash`, `internalNotes`, `project.notes`, and item `internalNote`.
+
+In production, `PROPOSAL_ACCESS_SECRET` is required. Without it, password-gated
+proposal access fails fast instead of falling back to the development secret.
 
 For production Supabase, apply `supabase/schema.sql` or the latest migration in
 `supabase/migrations/` before enabling public sharing.
@@ -120,9 +128,20 @@ Current Docker shape:
 Public sharing env:
 
 - `PROPOSAL_PUBLIC_ORIGIN`: canonical public origin used to copy `/p/<shareSlug>` links.
-- `PROPOSAL_ACCESS_SECRET`: secret for password-gate HMAC cookies.
+- `PROPOSAL_ACCESS_SECRET`: required production secret for password-gate HMAC cookies.
+- `ADMIN_ACCESS_TOKEN`: optional app-level defense-in-depth for direct `/api/items/*/share` calls; main browser access is protected by Caddy `basic_auth`.
 - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: use Supabase instead of `/app/.data/proposals.json`.
 - `SUPABASE_EVENTS_TABLE`: optional events table override, defaults to `proposal_events`.
+- Supabase deployments should include `public.increment_proposal_views`, added by `supabase/migrations/20260609000000_increment_proposal_views.sql`, so public view counters increment atomically. Older databases fall back to the non-atomic update path until the migration is applied.
+
+File-store warning:
+
+> `/app/.data/proposals.json` is intended for single-process use. Concurrent
+> writes from the web app and archive worker can lose updates because the
+> read-modify-write cycle is not cross-process locked. Use Supabase
+> (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`) when the archive worker is
+> enabled in production. The host-cron one-shot worker reduces the race window
+> but does not remove it.
 
 Archive worker scheduling:
 

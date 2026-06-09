@@ -8,6 +8,7 @@ import {
   Hammer,
   Link2,
   Save,
+  Sparkles,
 } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { ChangeItemList } from "./ChangeItemList";
@@ -23,6 +24,7 @@ import {
 import { Badge, Button } from "./Ui";
 import {
   createEmptyChangeItem,
+  createExampleProposalData,
   createId,
   createScopeListIndexEntry,
   getScopeListDataStorageKey,
@@ -163,12 +165,33 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
     setNotice("Сохранено локально");
   }
 
-  function addItem() {
+  function addItem(patch: Partial<ChangeItem> = {}) {
     setData((current) => ({
       ...current,
-      items: [...current.items, createEmptyChangeItem()],
+      items: [
+        ...current.items,
+        normalizeItem({ ...createEmptyChangeItem(), ...patch }),
+      ],
     }));
     setNotice("Сохранено локально");
+  }
+
+  function applyAdditionalWorkTemplate() {
+    const hasContent =
+      data.items.length > 0 ||
+      hasProjectChanged(data.project, initialData.project);
+
+    if (
+      hasContent &&
+      !window.confirm("Заменить текущий документ шаблоном КП на допработы?")
+    ) {
+      return;
+    }
+
+    setData(createExampleProposalData());
+    setServerProposalId(null);
+    setPublishedUrl("");
+    setNotice("Шаблон КП на допработы загружен");
   }
 
   function updateItem(id: string, patch: Partial<ChangeItem>) {
@@ -226,7 +249,7 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
 
     if (!parsed) {
       alert(
-        "Не удалось импортировать JSON. Структура proposal не распознана.",
+        "Не удалось импортировать JSON. Структура КП не распознана.",
       );
       return;
     }
@@ -336,13 +359,22 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
                 </span>
               </div>
               <h1 className="mt-1 text-xl font-semibold text-zinc-950">
-                {data.project.projectTitle || "Новый scope-лист"}
+                {data.project.projectTitle || "КП на допработы"}
               </h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ThemeToggle theme={theme} onChange={setTheme} />
             <ImportExportControls onImport={importData} />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={applyAdditionalWorkTemplate}
+              title="Загрузить шаблон КП на дополнительные работы"
+            >
+              <Sparkles size={16} aria-hidden="true" />
+              Шаблон допработ
+            </Button>
             <Button
               type="button"
               variant="secondary"
@@ -433,6 +465,12 @@ function normalizeItem(item: ChangeItem): ChangeItem {
   };
 }
 
+function hasProjectChanged(current: ProjectSettings, initial: ProjectSettings) {
+  const keys = Object.keys(current) as Array<keyof ProjectSettings>;
+
+  return keys.some((key) => current[key].trim() !== initial[key].trim());
+}
+
 function PublicationCard({
   publicUrl,
   statusLabel,
@@ -464,7 +502,7 @@ function PublicationCard({
 
       <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-600">
         {publicUrl ||
-          "Ссылка появится после публикации scope-листа."}
+          "Ссылка появится после публикации КП на допработы."}
       </div>
 
       <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-600">

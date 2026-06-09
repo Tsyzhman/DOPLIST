@@ -31,8 +31,8 @@ export function PricingBreakdown({
       <div className="mx-auto max-w-6xl">
       <SectionHeading
         eyebrow="Бюджет"
-        title="Стоимость по позициям"
-        copy="Опциональные позиции можно включать и выключать локально, чтобы сразу увидеть влияние на итоговый бюджет."
+        title="Бюджет допработ"
+        copy="Опциональные позиции можно включать и выключать, чтобы сразу увидеть влияние выбранного сценария на итоговый бюджет."
       />
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200">
@@ -64,7 +64,7 @@ export function PricingBreakdown({
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
         <TotalTile
-          label="Обязательные"
+          label="Ближайший контур"
           value={formatMoney(requiredSubtotal, currency)}
         />
         <TotalTile

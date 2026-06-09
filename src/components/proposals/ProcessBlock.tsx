@@ -8,8 +8,8 @@ export function ProcessBlock({ data }: { data: ProposalData }) {
       <div className="mx-auto max-w-6xl">
         <SectionHeading
           eyebrow="Процесс"
-          title="Как запускаем работу"
-          copy="Этапы показывают порядок движения от согласования объема к передаче результата."
+          title="Как запускаем допработы"
+          copy="Этапы показывают порядок движения от согласования дополнительного объема к передаче результата."
         />
         <NumberedListBlock
           items={splitLines(data.project.processSteps)}

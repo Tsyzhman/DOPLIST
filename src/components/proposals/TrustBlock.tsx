@@ -10,7 +10,7 @@ export function TrustBlock({ data }: { data: ProposalData }) {
         <SectionHeading
           eyebrow="Доверие"
           title="Почему этот план можно защищать"
-          copy="В этом блоке остаются только проверяемые основания: опыт, правила работы и подтверждения из данных предложения."
+          copy="План опирается на уже известный проектный контекст, правила работы и проверяемый эффект каждой допработы."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <NarrativeCard

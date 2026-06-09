@@ -133,7 +133,7 @@ export function ScopeListDashboard() {
               className="inline-flex h-9 items-center gap-2 rounded-md bg-zinc-900 px-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
             >
               <Plus size={16} aria-hidden="true" />
-              Новый лист
+              Новое КП
             </Link>
           </div>
         </div>
@@ -142,11 +142,12 @@ export function ScopeListDashboard() {
       <div className="mx-auto max-w-[1500px] px-6 py-10">
         <section className="max-w-2xl">
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
-            Scope-листы
+            КП на допработы
           </h1>
           <p className="mt-2 text-sm leading-6 text-zinc-500">
-            Создавайте листы работ, публикуйте приватные клиентские ссылки и
-            возвращайтесь к нужному объёму без поиска по вкладкам.
+            Создавайте предложения на дополнительные работы, публикуйте
+            приватные клиентские ссылки и возвращайтесь к нужному объёму без
+            поиска по вкладкам.
           </p>
         </section>
 
@@ -195,7 +196,7 @@ export function ScopeListDashboard() {
                 <table className="w-full min-w-[1080px] text-left text-sm">
                   <thead className="border-b border-zinc-200 bg-zinc-50/60 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">
                     <tr>
-                      <th className="px-5 py-3 font-semibold">Лист</th>
+                      <th className="px-5 py-3 font-semibold">КП</th>
                       <th className="px-5 py-3 font-semibold">Клиент</th>
                       <th className="px-5 py-3 font-semibold">Статус</th>
                       <th className="px-5 py-3 font-semibold">Обновлено</th>
@@ -268,7 +269,6 @@ export function ScopeListDashboard() {
                             </IconButton>
                             <RowMenu
                               entryId={entry.id}
-                              hasPublicUrl={Boolean(entry.publicUrl)}
                               onRemove={() => deleteEntry(entry)}
                             />
                           </div>
@@ -290,10 +290,10 @@ export function ScopeListDashboard() {
                 <Link2 size={20} aria-hidden="true" />
               </div>
               <h2 className="mt-4 text-base font-semibold text-zinc-950">
-                Листов нет
+                КП нет
               </h2>
               <p className="mt-1 max-w-sm text-sm text-zinc-500">
-                В выбранном фильтре пока нет scope-листов.
+                В выбранном фильтре пока нет КП на допработы.
               </p>
             </div>
           )}
@@ -366,11 +366,9 @@ function IconButton({
 
 function RowMenu({
   entryId,
-  hasPublicUrl,
   onRemove,
 }: {
   entryId: string;
-  hasPublicUrl: boolean;
   onRemove: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -416,10 +414,9 @@ function RowMenu({
             onSelect={() => setOpen(false)}
             icon={<Eye size={14} aria-hidden="true" />}
           >
-            Открыть лист
+            Открыть КП
           </MenuLink>
           <MenuButton
-            disabled={!hasPublicUrl}
             onSelect={() => {
               setOpen(false);
               onRemove();
@@ -427,7 +424,7 @@ function RowMenu({
             icon={<Trash2 size={14} aria-hidden="true" />}
             danger
           >
-            Удалить лист
+            Удалить КП
           </MenuButton>
         </div>
       ) : null}

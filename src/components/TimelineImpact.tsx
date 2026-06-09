@@ -19,14 +19,14 @@ export function TimelineImpact({ data }: TimelineImpactProps) {
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Влияние на сроки
+            Сроки допработ
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-            Влияние на сроки
+            Как выбранный объем влияет на сроки
           </h2>
           <p className="mt-3 text-base leading-7 text-zinc-600">
-            Срок указан как суммарная оценка выбранного объема. Позиции с
-            высоким приоритетом выделены отдельно.
+            Срок указан как суммарная оценка выбранного объема допработ.
+            Позиции с высоким приоритетом выделены отдельно.
           </p>
         </div>
         <div className="proposal-card rounded-lg border border-zinc-200 bg-white p-4 text-right">

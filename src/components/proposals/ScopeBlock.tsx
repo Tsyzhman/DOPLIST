@@ -20,9 +20,9 @@ export function ScopeBlock({ data }: { data: ProposalData }) {
     <section className="proposal-section border-t border-zinc-200 px-5 py-12">
       <div className="mx-auto max-w-6xl">
         <SectionHeading
-          eyebrow="Обзор корректировок"
-          title="Состав корректировок"
-          copy="Позиции сгруппированы по категории. В каждой карточке показаны ценность для клиента, бюджет, сроки и детали объема."
+          eyebrow="Обзор допработ"
+          title="Состав дополнительных работ"
+          copy="Позиции сгруппированы по категории. В каждой карточке показаны ценность для клиента, бюджет, сроки и границы объема."
         />
 
         <ScopeBoundary
@@ -152,15 +152,15 @@ function ScopeBoundary({
     <div className="mt-6 grid gap-3 md:grid-cols-2">
       <div className="proposal-card rounded-lg border border-emerald-200 bg-emerald-50 p-4">
         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-800">
-          Первый запуск
+          Ближайшая итерация
         </div>
         <p className="mt-2 text-sm leading-6 text-emerald-950">
-          В ближайший контур входит {launchCount} поз.
+          В ближайший контур допработ входит {launchCount} поз.
         </p>
       </div>
       <div className="proposal-card rounded-lg border border-amber-200 bg-amber-50 p-4">
         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">
-          Дорожная карта
+          Следующий этап
         </div>
         <p className="mt-2 text-sm leading-6 text-amber-950">
           На следующий этап вынесено {roadmapCount} поз.

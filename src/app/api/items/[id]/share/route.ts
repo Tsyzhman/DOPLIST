@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { normalizeProposalData } from "@/lib/proposal";
+import { isAdminRequestAuthorized } from "@/lib/server/admin-auth";
 import {
   getRequestPublicOrigin,
   publishProposal,
@@ -21,6 +22,10 @@ type ShareRouteContext = {
 };
 
 export async function POST(request: Request, context: ShareRouteContext) {
+  if (!isAdminRequestAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const origin = getRequestPublicOrigin(request);
   const body = (await request.json().catch(() => ({}))) as ShareRequestBody;
@@ -56,8 +61,9 @@ export async function POST(request: Request, context: ShareRouteContext) {
 
     return NextResponse.json(toShareResponse(result));
   } catch (error) {
+    console.error("[share] action failed", error);
     return NextResponse.json(
-      { error: String((error as Error).message || error) },
+      { error: "Не удалось обработать запрос на публикацию" },
       { status: 500 },
     );
   }

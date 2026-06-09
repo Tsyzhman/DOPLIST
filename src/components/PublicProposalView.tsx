@@ -33,7 +33,7 @@ export function PublicProposalView({
   const discussionDestination = normalizeCtaUrl(data.project.discussionUrl);
   const nextStepText =
     data.project.nextStepText ||
-    "После выбора подходящего сценария команда фиксирует объем и готовит старт работ. Если по составу есть вопросы — нажмите «Обсудить», и мы вернёмся к деталям.";
+    "После выбора подходящего сценария команда фиксирует дополнительный объем и готовит старт работ. Если по составу есть вопросы — нажмите «Обсудить», и мы вернёмся к деталям.";
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -140,7 +140,7 @@ export function PublicProposalView({
               <p className="mt-2 text-sm leading-6 text-zinc-600">
                 {approvalDestination || discussionDestination
                   ? "Откройте подходящий сценарий — мы зафиксируем ваш выбор."
-                  : "Ссылки на согласование появятся после публикации scope-листа."}
+                  : "Ссылки на согласование появятся после публикации КП."}
               </p>
               <div className="mt-5 grid gap-2">
                 <Button

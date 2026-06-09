@@ -8,16 +8,16 @@ export function ContextBlock({ data }: { data: ProposalData }) {
         <SectionHeading
           eyebrow="Контекст"
           title="Почему это важно сейчас"
-          copy="Фиксируем только проверяемые вводные: что уже известно, где есть риск и зачем нужна ближайшая итерация."
+          copy="Отталкиваемся от текущего проекта: что уже известно, где появился новый запрос и зачем нужна отдельная итерация допработ."
         />
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <NarrativeCard
-            title="Контекст клиента"
+            title="Текущий проект"
             copy={data.project.clientContext}
             empty="Контекст клиента пока не заполнен."
           />
           <NarrativeCard
-            title="Боль / риск"
+            title="Запрос / риск"
             copy={data.project.clientProblem}
             empty="Проблема или причина срочности пока не заполнена."
           />

@@ -8,6 +8,7 @@ import {
   recordProposalEvent,
   verifyProposalPassword,
 } from "@/lib/server/proposal-store";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 
 type PasswordRouteContext = {
   params: Promise<{ shareSlug: string }>;
@@ -25,7 +26,21 @@ export async function POST(request: Request, context: PasswordRouteContext) {
   const userAgent = request.headers.get("user-agent") || undefined;
   const referrer = request.headers.get("referer") || undefined;
   const password = String(body.password || "");
-  const isValid = verifyProposalPassword(proposal.passwordHash, password);
+  const limit = checkRateLimit(`pwd:${shareSlug}`, 10, 60_000);
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts" },
+      {
+        status: 429,
+        headers: {
+          "retry-after": String(Math.ceil(limit.retryAfterMs / 1000)),
+        },
+      },
+    );
+  }
+
+  const isValid = await verifyProposalPassword(proposal.passwordHash, password);
 
   await recordProposalEvent(proposal, isValid ? "password_success" : "password_failed", {
     userAgent,
