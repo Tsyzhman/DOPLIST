@@ -20,6 +20,7 @@ export { default as FileUp } from "lucide-react/dist/esm/icons/file-up.mjs";
 export { default as Hammer } from "lucide-react/dist/esm/icons/hammer.mjs";
 export { default as Layers3 } from "lucide-react/dist/esm/icons/layers-3.mjs";
 export { default as Link2 } from "lucide-react/dist/esm/icons/link-2.mjs";
+export { default as LogOut } from "lucide-react/dist/esm/icons/log-out.mjs";
 export { default as Moon } from "lucide-react/dist/esm/icons/moon.mjs";
 export { default as MessageSquareText } from "lucide-react/dist/esm/icons/message-square-text.mjs";
 export { default as MoreHorizontal } from "lucide-react/dist/esm/icons/more-horizontal.mjs";

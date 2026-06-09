@@ -7,6 +7,7 @@ import {
   Eye,
   FilePenLine,
   Link2,
+  LogOut,
   MoreHorizontal,
   Plus,
   Trash2,
@@ -41,7 +42,7 @@ const statusTone: Record<ScopeListStatus, string> = {
   published: "bg-emerald-50 text-emerald-800 ring-emerald-200",
 };
 
-export function ScopeListDashboard() {
+export function ScopeListDashboard({ showLogout }: { showLogout: boolean }) {
   const [entries, setEntries] = useState<ScopeListIndexEntry[]>([]);
   const [filter, setFilter] = useState<DashboardFilter>("all");
   const [theme, setTheme] = useState<ThemeMode>("dark");
@@ -116,6 +117,11 @@ export function ScopeListDashboard() {
     }
   }
 
+  async function logout() {
+    await fetch("/api/admin-auth", { method: "DELETE" }).catch(() => undefined);
+    window.location.assign("/login");
+  }
+
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
       <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur">
@@ -128,6 +134,16 @@ export function ScopeListDashboard() {
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle theme={theme} onChange={setTheme} />
+            {showLogout ? (
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950"
+              >
+                <LogOut size={16} aria-hidden="true" />
+                Выйти
+              </button>
+            ) : null}
             <Link
               href="/lists/new"
               className="inline-flex h-9 items-center gap-2 rounded-md bg-zinc-900 px-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800"

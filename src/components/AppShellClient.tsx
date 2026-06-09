@@ -7,6 +7,7 @@ import {
   Eye,
   Hammer,
   Link2,
+  LogOut,
   Save,
   Sparkles,
 } from "@/components/icons";
@@ -42,9 +43,14 @@ import type {
 type AppShellClientProps = {
   initialData: ProposalData;
   listId: string;
+  showLogout: boolean;
 };
 
-export function AppShellClient({ initialData, listId }: AppShellClientProps) {
+export function AppShellClient({
+  initialData,
+  listId,
+  showLogout,
+}: AppShellClientProps) {
   const [data, setData] = useState<ProposalData>(initialData);
   const [mode, setMode] = useState<ProposalMode>("builder");
   const [theme, setTheme] = useState<ThemeMode>("dark");
@@ -338,6 +344,11 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
     window.open(publicUrl, "_blank", "noopener,noreferrer");
   }
 
+  async function logout() {
+    await fetch("/api/admin-auth", { method: "DELETE" }).catch(() => undefined);
+    window.location.assign("/login");
+  }
+
   return (
     <main className="scopelist-theme min-h-screen bg-zinc-50 text-zinc-900">
       <header className="top-controls sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur no-print">
@@ -365,6 +376,12 @@ export function AppShellClient({ initialData, listId }: AppShellClientProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ThemeToggle theme={theme} onChange={setTheme} />
+            {showLogout ? (
+              <Button type="button" variant="ghost" onClick={logout}>
+                <LogOut size={16} aria-hidden="true" />
+                Выйти
+              </Button>
+            ) : null}
             <ImportExportControls onImport={importData} />
             <Button
               type="button"

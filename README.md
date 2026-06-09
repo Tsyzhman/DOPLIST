@@ -32,11 +32,12 @@ Public routes:
 /api/public-events
 ```
 
-Admin routes such as `/api/items/[id]/share` should be behind Caddy
-`basic_auth` in production. Optionally set `ADMIN_ACCESS_TOKEN` for direct
-server/CLI calls; when present, the app requires the `x-scopelist-admin-token`
-header on `/api/items/*/share`. This token must not be embedded in client-side
-browser code.
+Admin workspace routes (`/`, `/lists/...`) use built-in key auth when
+`ADMIN_ACCESS_TOKEN` is set. Open `/login`, enter the key, and the app stores a
+signed httpOnly admin cookie. In production, `ADMIN_ACCESS_TOKEN` is required;
+without it, the admin workspace and share API fail closed. Direct server/CLI
+calls to `/api/items/*/share` can still use the `x-scopelist-admin-token`
+header. This token must not be embedded in client-side browser code.
 
 The public page checks `status`, `shareSettings.isPublished`, `expiresAt`, and
 password access before rendering. Password-protected proposals use an httpOnly
@@ -129,7 +130,7 @@ Public sharing env:
 
 - `PROPOSAL_PUBLIC_ORIGIN`: canonical public origin used to copy `/p/<shareSlug>` links.
 - `PROPOSAL_ACCESS_SECRET`: required production secret for password-gate HMAC cookies.
-- `ADMIN_ACCESS_TOKEN`: optional app-level defense-in-depth for direct `/api/items/*/share` calls; main browser access is protected by Caddy `basic_auth`.
+- `ADMIN_ACCESS_TOKEN`: required production key for built-in admin login and for direct `/api/items/*/share` calls through `x-scopelist-admin-token`.
 - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: use Supabase instead of `/app/.data/proposals.json`.
 - `SUPABASE_EVENTS_TABLE`: optional events table override, defaults to `proposal_events`.
 - Supabase deployments should include `public.increment_proposal_views`, added by `supabase/migrations/20260609000000_increment_proposal_views.sql`, so public view counters increment atomically. Older databases fall back to the non-atomic update path until the migration is applied.

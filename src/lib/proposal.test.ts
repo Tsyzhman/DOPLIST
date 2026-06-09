@@ -5,7 +5,12 @@ import {
   calculateItemTotal,
   calculateTotalDays,
   createEmptyChangeItem,
+  createExampleProposalData,
+  createScopeListAiInputExampleData,
+  exportProposalDataForJson,
   normalizeProposalData,
+  validateScopeListAiInputData,
+  validateScopeListProposalJsonData,
 } from "./proposal.ts";
 
 test("calculateItemTotal clamps price and quantity", () => {
@@ -139,4 +144,50 @@ test("normalizeProposalData defaults and clamps malformed item fields", () => {
   assert.equal(normalized.items[0].estimatedDays, 0);
   assert.equal(normalized.items[0].optional, true);
   assert.equal(normalized.items[0].selected, true);
+});
+
+test("AI JSON template matches the new structure and imports", () => {
+  const template = createScopeListAiInputExampleData();
+  const validation = validateScopeListAiInputData(template);
+
+  assert.deepEqual(validation, { valid: true, errors: [] });
+  assert.ok(template.items.length > 0);
+  assert.equal("id" in template.items[0], false);
+  assert.equal(typeof template.items[0].pricing.price, "number");
+  assert.equal(typeof template.items[0].timeline.estimatedDays, "number");
+  assert.equal(typeof template.items[0].selection.selected, "boolean");
+  assert.ok(Array.isArray(template.project.assumptions));
+
+  const imported = normalizeProposalData(template);
+
+  assert.ok(imported);
+  assert.equal(imported.items[0].price, template.items[0].pricing.price);
+  assert.equal(
+    imported.items[0].estimatedDays,
+    template.items[0].timeline.estimatedDays,
+  );
+  assert.equal(
+    imported.items[0].dependencyNote,
+    template.items[0].notes.dependencyNote || "",
+  );
+});
+
+test("exported proposal JSON matches the system schema and imports", () => {
+  const source = createExampleProposalData();
+  const exported = exportProposalDataForJson(source);
+  const validation = validateScopeListProposalJsonData(exported);
+
+  assert.deepEqual(validation, { valid: true, errors: [] });
+  assert.ok(exported.items.length > 0);
+  assert.equal(typeof exported.items[0].id, "string");
+  assert.equal(exported.items[0].pricing.source, "user_confirmed");
+  assert.equal(exported.items[0].pricing.confidence, "high");
+
+  const imported = normalizeProposalData(exported);
+
+  assert.ok(imported);
+  assert.equal(imported.project.projectTitle, source.project.projectTitle);
+  assert.equal(imported.items[0].id, exported.items[0].id);
+  assert.equal(imported.items[0].price, exported.items[0].pricing.price);
+  assert.equal(imported.items[0].selected, exported.items[0].selection.selected);
 });

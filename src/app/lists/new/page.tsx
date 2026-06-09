@@ -1,25 +1,10 @@
-"use client";
+import { NewScopeListClient } from "@/components/NewScopeListClient";
+import { requireAdminAccess } from "@/lib/server/admin-page-auth";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+export const dynamic = "force-dynamic";
 
-export default function NewScopeListPage() {
-  const router = useRouter();
+export default async function NewScopeListPage() {
+  await requireAdminAccess("/lists/new");
 
-  useEffect(() => {
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `list-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-    router.replace(`/lists/${id}/edit`);
-  }, [router]);
-
-  return (
-    <main className="scopelist-theme flex min-h-screen items-center justify-center bg-main px-4 text-ink">
-      <p className="text-sm font-semibold text-zinc-600">
-        Создаём новое КП на допработы
-      </p>
-    </main>
-  );
+  return <NewScopeListClient />;
 }
